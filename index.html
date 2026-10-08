@@ -33,6 +33,7 @@
       --c-red: #ef4444;
       --c-orange: #f59e0b;
       --c-indigo: #6366f1;
+      --c-whatsapp: #25d366;
     }
 
     * {
@@ -190,7 +191,6 @@
       padding: 0.8rem;
     }
 
-    /* مۆداڵی ئەلەرمی فریاگوزاری (سایرین) */
     #emergencyAlarmModal {
       display: none;
       position: fixed;
@@ -226,7 +226,6 @@
       width: 100%;
     }
 
-    /* سێرچی گشتی لە سەرەوە */
     .global-search-container {
       background: #ffffff;
       padding: 0.8rem 1rem;
@@ -350,7 +349,7 @@
       width: 100%;
       border-collapse: collapse;
       text-align: right;
-      min-width: 700px;
+      min-width: 780px;
     }
 
     th, td {
@@ -380,6 +379,7 @@
     .btn-danger  { background: var(--c-red); color: #fff; }
     .btn-warning { background: var(--c-orange); color: #fff; }
     .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-whatsapp { background: var(--c-whatsapp); color: #fff; }
 
     .form-control {
       width: 100%;
@@ -584,23 +584,30 @@
       color: #94a3b8;
       text-decoration: line-through;
     }
+
+    /* ستایلی چاپی پسوولە */
+    @media print {
+      body * { visibility: hidden; }
+      #printableInvoiceArea, #printableInvoiceArea * { visibility: visible; }
+      #printableInvoiceArea { position: absolute; left: 0; top: 0; width: 100%; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- نۆتیفیکەیشنی خێرا -->
+  <!-- نۆتیفیکەیشن -->
   <div id="toastNotification">
     <span id="toastIcon">🔔</span>
     <span id="toastMsg">کردارەکە سەرکەوتوو بوو</span>
   </div>
 
-  <!-- مۆداڵی ئەلەرمی دەنگی و فریاگوزاری (سایرین بۆ ٢٤، ٤٨، ٧٢ سەعات) -->
+  <!-- مۆداڵی ئەلەرمی دەنگی و فریاگوزاری -->
   <div id="emergencyAlarmModal">
     <div class="emergency-box">
       <div style="font-size:42px; margin-bottom:0.4rem; animation:pulseAlert 0.8s infinite alternate;">🚨</div>
       <h3 style="color:var(--c-red); margin-bottom:0.3rem;">ئاگاداری بەپەلە! داواکاری دواکەوتووە</h3>
       <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:1rem;">
-        ئەم داواکارییانەی خوارەوە زیاتر لە ٢٤ یان ٤٨ یان ٧٢ کاتژمێرە ماونەتەوە و نەگەیشتوونەتە قۆناغی پرێنت!
+        ئەم داواکارییانەی خوارەوە ٢٤ یان ٤٨ یان ٧٢ کاتژمێریان بەسەردا چووە و هێشتا نەگەیشتوونەتە قۆناغی پرێنت!
       </p>
       
       <div id="alarmOrdersList" style="text-align:right; max-height:180px; overflow-y:auto; margin-bottom:1.2rem; display:flex; flex-direction:column; gap:6px;"></div>
@@ -664,13 +671,13 @@
         </div>
       </div>
 
-      <!-- بەشی ئەلەرم و سایرین بۆ تەڵەبی دواکەوتوو (٢٤، ٤٨، ٧٢ سەعات) -->
+      <!-- بەشی ئەلەرم و سایرین -->
       <div class="icon-btn-wrapper" onclick="openEmergencyModalDirectly(event)">
         <div class="circle-icon-btn" style="background:#fee2e2; border-color:var(--c-red);" title="ئاگاداری تەڵەبی دواکەوتوو">🚨</div>
         <div class="badge-count pulsing" id="alarmBadge" style="background:var(--c-red);">0</div>
       </div>
 
-      <!-- نۆتیفیکەیشنی ئاسایی (قەرزەکان) -->
+      <!-- نۆتیفیکەیشنی ئاسایی -->
       <div class="icon-btn-wrapper" onclick="toggleNotifDropdown(event)">
         <div class="circle-icon-btn" title="ئاگادارییەکان">🔔</div>
         <div class="badge-count" id="notifBadge">0</div>
@@ -687,11 +694,11 @@
 
   <div class="container">
 
-    <!-- سێرچی گشتی (Universal Global Search) لە هەموو داتابەیسەکەدا -->
+    <!-- سێرچی گشتی لە تەواوی داتابەیسەکەدا -->
     <div class="global-search-container">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-        <strong style="font-size:13.5px; color:var(--c-purple);">🔍 سێرچی گشتی لە سەرانسەری سیستەمدا (تەڵەب، خەرجی کار، حیبر، دارایی، ئامێر):</strong>
-        <span style="font-size:11px; color:var(--text-muted);">هەر وشە، ناو، نرخ، یان مۆبایلێک بنووسە لە هەموو بەشەکاندا دەیدۆزێتەوە</span>
+        <strong style="font-size:13.5px; color:var(--c-purple);">🔍 سێرچی گشتی لە سەرانسەری سیستەمدا:</strong>
+        <span style="font-size:11px; color:var(--text-muted);">گەڕان لەناو داواکاری، مەسرەفی کار (حیبر)، دارایی و ئامێرەکان</span>
       </div>
       <input type="text" id="globalSearchInput" class="form-control" style="font-size:13px; padding:0.5rem 0.8rem; border-color:var(--c-purple);" placeholder="لێرە بنووسە بۆ گەڕانی خێرا لە هەموو داتابەیسەکە..." oninput="handleGlobalSearch()">
       
@@ -834,7 +841,7 @@
               <th>تەسلیمکردن</th>
               <th>دۆخ</th>
               <th>قۆناغەکان</th>
-              <th>کردارەکان</th>
+              <th>کردارەکان و واتسئاپ</th>
             </tr>
           </thead>
           <tbody id="ordersTableBody"></tbody>
@@ -867,7 +874,7 @@
               <th>کتێب</th>
               <th>نرخی کتێب</th>
               <th>گەیاندن (خێر)</th>
-              <th>کردار</th>
+              <th>کردار و واتسئاپ</th>
             </tr>
           </thead>
           <tbody id="completedTableBody"></tbody>
@@ -875,7 +882,7 @@
       </div>
     </div>
 
-    <!-- جۆرەکان و نەوعیەتی پەڕەکان -->
+    <!-- جۆرەکان و پەڕەکان -->
     <div id="settingsTab" class="view-panel" style="display: none;">
       <div class="grid-2">
         <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
@@ -953,7 +960,7 @@
     <!-- لۆگ و مێژوو -->
     <div id="logsTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
-        <h3>📜 تۆماری جووڵە و مێژوو (Activity Logs) - کلیک لە هەر دێڕێک بکە دەتباتە سەر شوێنەکە</h3>
+        <h3>📜 تۆماری جووڵە و مێژوو (Activity Logs)</h3>
         <button class="btn btn-secondary btn-sm" onclick="clearLogs()">پاککردنەوەی لۆگەکان</button>
       </div>
       <div class="table-card">
@@ -1250,6 +1257,15 @@
     </div>
   </div>
 
+  <!-- ناوچەی شاراوە بۆ چاپی پسوولەی فەرمی (Printable Invoice Area) -->
+  <div id="printableInvoiceArea" style="display:none; padding:2rem; background:#fff; color:#000;">
+    <div style="text-align:center; border-bottom:2px solid #7042f8; padding-bottom:1rem; margin-bottom:1.5rem;">
+      <h1 style="color:#7042f8; font-size:26px;">Tiny Hands ✋ تینی هاندس</h1>
+      <p style="font-size:13px; color:#555;">پسوولەی داواکاری و گەیاندن</p>
+    </div>
+    <div id="invoiceDetailsBox" style="font-size:14px; line-height:1.8;"></div>
+  </div>
+
   <script>
     function cleanNumStr(str) {
       if (!str) return '';
@@ -1275,7 +1291,7 @@
       setTimeout(() => { toast.classList.remove('show'); }, 2800);
     }
 
-    // دەنگی ئەلەرم لە ڕێگەی Web Audio API (لە هەموو مۆبایل و براوسەرێک ئیش دەکات بێ فایلی دەنگی)
+    // دەنگی ئەلەرم
     let audioCtx = null;
     let alarmInterval = null;
 
@@ -1308,7 +1324,6 @@
         alarmInterval = null;
       }
       document.getElementById('emergencyAlarmModal').style.display = 'none';
-      // پاشەکەوتکردنی کاتی بێدەنگکردن بۆ ئەوەی تا ١٢ سەعات بێدەنگ بێت
       localStorage.setItem('th_last_snooze', Date.now());
     }
 
@@ -1317,7 +1332,6 @@
       checkEmergencyAlerts(true);
     }
 
-    // پشکنینی داواکارییەکان بۆ ٢٤، ٤٨، ٧٢ کاتژمێر
     function checkEmergencyAlerts(forceOpen = false) {
       const now = Date.now();
       const lastSnooze = Number(localStorage.getItem('th_last_snooze') || 0);
@@ -1327,16 +1341,12 @@
       const overdueOrders = [];
 
       orders.forEach(o => {
-        // ئەگەر داواکارییەکە تەواو نەبووبێت و هێشتا نەگەیشتبێتە قۆناغی پرێنت
         if (!o.completed && (!o.stages || !o.stages.print)) {
           const orderTimeMs = o.orderDate ? new Date(o.orderDate).getTime() : o.id;
           const diffHours = Math.floor((now - orderTimeMs) / (1000 * 60 * 60));
 
           if (diffHours >= 24) {
-            overdueOrders.push({
-              ...o,
-              diffHours
-            });
+            overdueOrders.push({ ...o, diffHours });
           }
         }
       });
@@ -1360,14 +1370,75 @@
         `).join('');
       }
 
-      // ئەگەر داواکاری دواکەوتوو هەبوو و ١٢ سەعات تێپەڕیبوو یان بە دەست کرایەوە
       if (overdueOrders.length > 0 && (canPlaySound || forceOpen)) {
         document.getElementById('emergencyAlarmModal').style.display = 'flex';
         startEmergencySound();
       }
     }
 
-    // سێرچی گشتی لە سەرانسەری داتابەیسەکە
+    // ناردنی نامەی ڕاستەوخۆ بە واتسئاپ
+    function sendWhatsAppNotification(orderId) {
+      const o = orders.find(x => x.id === orderId);
+      if (!o) return;
+
+      let cleanPhone = cleanNumStr(o.phone || '').replace(/[^0-9]/g, '');
+      if (!cleanPhone) return alert('تکایە ژمارەی مۆبایل بۆ ئەم کڕیارە تۆمار بکە!');
+
+      // ڕێکخستنی کۆدی وڵات ئەگەر بە 0750 یان هاوشێوە نووسرابوو
+      if (cleanPhone.startsWith('0')) {
+        cleanPhone = '964' + cleanPhone.substring(1);
+      } else if (!cleanPhone.startsWith('964')) {
+        cleanPhone = '964' + cleanPhone;
+      }
+
+      const clientName = o.name || 'کڕیاری بەڕێز';
+      const kidName = o.childName || o.childInfo || 'منداڵە ئازیزەکەت';
+
+      const msg = `سڵاو بەڕێز ${clientName}، تەڵەبەکەت بۆ ${kidName} دیزاینەکەی تەواو بوو و چاپ کرا، بەم زووانە دەگاتە دەستت ✋📦`;
+      const encodedMsg = encodeURIComponent(msg);
+      const waUrl = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
+
+      window.open(waUrl, '_blank');
+      showToast('چاتی واتسئاپ کرایەوە', '💬');
+    }
+
+    // چاپکردنی پسوولەی فەرمی
+    function printOrderInvoice(orderId) {
+      const o = orders.find(x => x.id === orderId);
+      if (!o) return;
+
+      const total = (o.price || 0) + (o.deliveryFee || 0);
+      const box = document.getElementById('invoiceDetailsBox');
+      box.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+          <div><b>کڕیار:</b> ${o.name} (${o.ordererRelation || 'دایک'})</div>
+          <div><b>تەلەفۆن:</b> ${o.phone || '---'}</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+          <div><b>شار و ناونیشان:</b> ${o.address || '---'}</div>
+          <div><b>بەروار:</b> ${o.orderDate || ''}</div>
+        </div>
+        <hr style="border:1px dashed #ccc; margin:15px 0;">
+        <div style="margin-bottom:8px;"><b>ناوی منداڵ:</b> ${o.childName || o.childInfo || '---'} (تەمەن: ${o.childAge || '---'} | ڕەگەز: ${o.childGender || '---'})</div>
+        <div style="margin-bottom:8px;"><b>جۆری کتێب:</b> ${o.bookType}</div>
+        <div style="margin-bottom:8px;"><b>پەڕەکان:</b> ${(o.selectedPages || []).join('، ')}</div>
+        <hr style="border:1px dashed #ccc; margin:15px 0;">
+        <div style="display:flex; justify-content:space-between; font-size:16px; margin-top:10px;">
+          <div><b>نرخی کتێب:</b> ${o.price?.toLocaleString()} IQD</div>
+          <div><b>گەیاندن:</b> ${o.deliveryFee?.toLocaleString() || 0} IQD</div>
+        </div>
+        <div style="text-align:center; font-size:18px; color:#7042f8; font-weight:bold; margin-top:15px;">
+          کۆی گشتی بۆ تەسلیمکردن: ${total.toLocaleString()} IQD (${o.payment === 'paid' ? 'وەرگیراوە' : 'قەرز - پارەکە وەربگرە'})
+        </div>
+      `;
+
+      const pArea = document.getElementById('printableInvoiceArea');
+      pArea.style.display = 'block';
+      window.print();
+      pArea.style.display = 'none';
+    }
+
+    // سێرچی گشتی
     function handleGlobalSearch() {
       const raw = document.getElementById('globalSearchInput').value.trim();
       const q = raw.toLowerCase();
@@ -1382,7 +1453,6 @@
 
       let matches = [];
 
-      // سێرچ لە داواکارییەکان
       orders.forEach(o => {
         let hit = false;
         if (o.name && o.name.toLowerCase().includes(q)) hit = true;
@@ -1399,7 +1469,6 @@
         }
       });
 
-      // سێرچ لە مەسرەفی کار (حیبر، وەرەقە...)
       workExpenses.forEach(w => {
         let hit = false;
         if (w.desc && w.desc.toLowerCase().includes(q)) hit = true;
@@ -1414,7 +1483,6 @@
         }
       });
 
-      // سێرچ لە دارایی و FIB
       finances.forEach(f => {
         let hit = false;
         if (f.title && f.title.toLowerCase().includes(q)) hit = true;
@@ -1428,7 +1496,6 @@
         }
       });
 
-      // سێرچ لە ئامێرەکان
       assets.forEach(a => {
         let hit = false;
         if (a.name && a.name.toLowerCase().includes(q)) hit = true;
@@ -1576,7 +1643,7 @@
           localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
           
           refreshAllUI();
-          checkEmergencyAlerts(); // پشکنینی ئۆتۆماتیکی ئەلەرمەکان لە کاتی کلاود
+          checkEmergencyAlerts();
         }
       });
     }
@@ -2318,6 +2385,12 @@
         logAction('گۆڕینی قۆناغ', `قۆناغی [${stg}] بۆ داواکاری [${o.name}] گۆڕدرا بۆ: ${o.stages[stg] ? 'تەواو' : 'ناتەواو'}`, 'ordersTab');
         syncToCloud(); 
         showToast('قۆناغ نوێکرایەوە', '🔄');
+
+        // پشکنینی خۆکار: ئەگەر هەموو قۆناغەکان تەواو بوون، ئاگاداریی واتسئاپ بدات
+        const s = o.stages;
+        if (s.data && s.design && s.print && s.ready && s.sent) {
+          showToast(`هەموو قۆناغەکانی [${o.name}] تەواو بوو! دوگمەی واتسئاپ لێبدە بۆ نامە ناردن`, '💬');
+        }
       }
     }
 
@@ -2372,6 +2445,7 @@
         const delFee = o.deliveryFee || 0;
         const delProf = o.deliveryProfit || 0;
         const totalWithDel = (o.price || 0) + delFee;
+        const isAllStagesDone = o.stages && o.stages.data && o.stages.design && o.stages.print && o.stages.ready && o.stages.sent;
 
         return `
         <tr>
@@ -2404,7 +2478,12 @@
             </div>
           </td>
           <td>
-            <div style="display:flex; flex-direction:column; gap:2px;">
+            <div style="display:flex; flex-direction:column; gap:3px;">
+              <!-- دوگمەی تایبەتی واتسئاپ -->
+              <button class="btn btn-sm btn-whatsapp" title="ناردنی نامەی حازرکراو بە واتسئاپ" onclick="sendWhatsAppNotification(${o.id})">
+                <span>💬 واتسئاپ</span> ${isAllStagesDone ? '⭐' : ''}
+              </button>
+              <button class="btn btn-sm btn-secondary" title="چاپی پسوولەی داواکاری" onclick="printOrderInvoice(${o.id})">🖨️ پسوولە</button>
               <button class="btn btn-sm btn-success" onclick="markAsCompleted(${o.id})">تەواو</button>
               <button class="btn btn-sm btn-secondary" onclick="openOrderModal(${o.id})">دەستکاری</button>
               <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">سڕینەوە</button>
@@ -2426,8 +2505,12 @@
           <td>${(o.price || 0).toLocaleString()}</td>
           <td>${delFee.toLocaleString()} <small style="color:var(--c-green);">(خێر: ${delProf.toLocaleString()})</small></td>
           <td>
-            <button class="btn btn-sm btn-warning" onclick="orders.find(x=>x.id===${o.id}).completed=false;syncToCloud();showToast('چالاککرایەوە','🔄');">چالاککردنەوە</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">سڕینەوە</button>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-sm btn-whatsapp" onclick="sendWhatsAppNotification(${o.id})">💬 واتسئاپ</button>
+              <button class="btn btn-sm btn-secondary" onclick="printOrderInvoice(${o.id})">🖨️ پسوولە</button>
+              <button class="btn btn-sm btn-warning" onclick="orders.find(x=>x.id===${o.id}).completed=false;syncToCloud();showToast('چالاککرایەوە','🔄');">چالاککردنەوە</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">سڕینەوە</button>
+            </div>
           </td>
         </tr>`;
       }).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ داواکارییەک نییە</td></tr>';
@@ -2713,7 +2796,6 @@
       const debt = finances.filter(f => f.type === 'debt').reduce((s, f) => s + (f.amount || 0), 0);
       const assetsVal = assets.reduce((s, a) => s + (a.price || 0), 0);
 
-      // قازانجی گشتی: فرۆشتن + خێری گەیاندن - مەسرەف
       const netProfit = (totalSales + totalDeliveryProfit) - allExpenses;
       const avgOrder = filteredOrders.length > 0 ? Math.round(totalSales / filteredOrders.length) : 0;
 
@@ -2762,7 +2844,6 @@
 
       const rawQ = (document.getElementById('analyticsSearchInput')?.value || '').trim();
       const q = rawQ.toLowerCase();
-      const qNum = cleanNumStr(rawQ);
 
       const ageCounts = {};
       const ordererCounts = { 'دایک': 0, 'باوک': 0, 'خزم/کەسی تر': 0 };
