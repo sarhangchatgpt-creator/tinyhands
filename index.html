@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tiny Hands ✋ | سیستەمی بەڕێوەبردن</title>
+
+  <!-- کلاودی فایەربەیسی گووگڵ -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    @font-face {
+      font-family: 'Kurdistan24';
+      src: local('Kurdistan24'), local('K24'), url('https://fonts.cdnfonts.com/s/72851/Kurdistan24-Regular.woff') format('woff');
+    }
+
+    :root {
+      --bg: #f3f6fc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      
+      --c-purple: #7042f8;
+      --c-blue: #0ea5e9;
+      --c-green: #10b981;
+      --c-pink: #ec4899;
+      --c-teal: #0d9488;
+      --c-red: #ef4444;
+      --c-orange: #f59e0b;
+      --c-indigo: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Kurdistan24', 'Segoe UI', Tahoma, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 50px;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .top-nav {
+      display: flex;
+      gap: 0.4rem;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .top-nav::-webkit-scrollbar { display: none; }
+
+    .nav-pill {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.85rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .nav-pill.active {
+      background: var(--c-purple);
+      color: #fff;
+      border-color: var(--c-purple);
+    }
+
+    .nav-pill.trash-pill.active {
+      background: var(--c-red);
+      border-color: var(--c-red);
+    }
+
+    .user-badge {
+      background: #f1f5f9;
+      padding: 0.35rem 0.7rem;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 1rem auto;
+      padding: 0 0.8rem;
+      width: 100%;
+    }
+
+    .colorful-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .colorful-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+      .colorful-grid { grid-template-columns: 1fr; }
+    }
+
+    .color-card {
+      border-radius: 16px;
+      padding: 1.2rem 1rem;
+      color: #ffffff;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    .color-card.clickable {
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .color-card.clickable:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+    }
+
+    .color-card .title { font-size: 13.5px; font-weight: 700; margin-bottom: 0.3rem; }
+    .color-card .val { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+    .color-card .sub { font-size: 11px; margin-top: 4px; opacity: 0.9; }
+
+    .bg-purple { background-color: var(--c-purple); }
+    .bg-blue   { background-color: var(--c-blue); }
+    .bg-green  { background-color: var(--c-green); }
+    .bg-pink   { background-color: var(--c-pink); }
+    .bg-teal   { background-color: var(--c-teal); }
+    .bg-red    { background-color: var(--c-red); }
+    .bg-orange { background-color: var(--c-orange); }
+    .bg-indigo { background-color: var(--c-indigo); }
+
+    .table-card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      margin-top: 0.8rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: right;
+      min-width: 700px;
+    }
+
+    th, td {
+      padding: 0.75rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      vertical-align: middle;
+    }
+
+    th { background: #f8fafc; color: var(--text-muted); font-weight: bold; }
+
+    .btn {
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .btn-sm { padding: 0.3rem 0.55rem; font-size: 11.5px; border-radius: 6px; }
+    .btn-primary { background: var(--c-purple); color: #fff; }
+    .btn-success { background: var(--c-green); color: #fff; }
+    .btn-danger  { background: var(--c-red); color: #fff; }
+    .btn-warning { background: var(--c-orange); color: #fff; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+
+    .form-control {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .pages-checklist-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      background: #f8fafc;
+      padding: 0.6rem;
+      border-radius: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .page-check-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 12px;
+      cursor: pointer;
+      background: #fff;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+    @media (max-width: 520px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(2px);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 0.8rem;
+    }
+
+    .modal-box {
+      background: #fff;
+      padding: 1.4rem;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    #loginOverlay {
+      position: fixed;
+      inset: 0;
+      background: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      padding: 1rem;
+    }
+    .login-box {
+      background: #fff;
+      padding: 2rem 1.5rem;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+    }
+
+    .cloud-status {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #10b981;
+      margin-left: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- مۆداڵی لۆگین -->
+  <div id="loginOverlay">
+    <div class="login-box">
+      <h2 style="color: var(--c-purple); margin-bottom: 0.4rem;">تینی هاندس ✋</h2>
+      <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 1rem;">بەخێربێن بۆ سیستەمی ئۆنلاین</p>
+      <div style="text-align: right; margin-bottom: 0.8rem;">
+        <label style="font-size: 12.5px; font-weight: bold;">بەکارهێنەر:</label>
+        <select id="userSelect" class="form-control" style="margin-top: 3px;">
+          <option value="سەرهەنگ کەریم">سەرهەنگ کەریم (Sarhang karim)</option>
+          <option value="پەیڤین کەریم">پەیڤین کەریم (Payveen Karim)</option>
+        </select>
+      </div>
+      <div style="text-align: right; margin-bottom: 1rem;">
+        <label style="font-size: 12.5px; font-weight: bold;">وشەی نهێنی (tiny4321):</label>
+        <input type="password" id="passInput" class="form-control" placeholder="tiny4321" style="margin-top: 3px;">
+      </div>
+      <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="login()">چوونەژوورەوە</button>
+      <p id="loginError" style="color: var(--c-red); font-size: 12px; margin-top: 6px; display: none;">وشەی نهێنی هەڵەیە!</p>
+    </div>
+  </div>
+
+  <!-- هێدەر -->
+  <header>
+    <div class="top-nav">
+      <button class="nav-pill active" onclick="switchTab('dashboardTab')">📊 داشبۆرد</button>
+      <button class="nav-pill" onclick="switchTab('ordersTab')">📦 داواکارییەکان</button>
+      <button class="nav-pill" onclick="switchTab('completedTab')">✅ تەواوبووەکان</button>
+      <button class="nav-pill" onclick="switchTab('settingsTab')">📑 جۆرەکان و پەڕەکان</button>
+      <button class="nav-pill" onclick="switchTab('financeTab')">💰 دارایی و FIB</button>
+      <button class="nav-pill" onclick="switchTab('assetsTab')">🖥️ ئامێرەکان</button>
+      <button class="nav-pill trash-pill" onclick="switchTab('trashTab')">🗑️ تەنەکەی خۆڵ (<span id="trashCount">0</span>)</button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <div class="user-badge"><span class="cloud-status" title="ئۆنلاینە"></span> <span id="currentUserName">---</span></div>
+      <button class="btn btn-danger btn-sm" onclick="logout()">دەرچوون</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- داشبۆرد -->
+    <div id="dashboardTab" class="view-panel">
+      <div class="colorful-grid">
+        <!-- ڕیزی یەکەم -->
+        <div class="color-card bg-purple">
+          <div class="title">کۆی داواکاری</div>
+          <div class="val" id="dTotalOrders">0</div>
+        </div>
+        <div class="color-card bg-blue">
+          <div class="title">چالاک</div>
+          <div class="val" id="dActiveOrders">0</div>
+        </div>
+        <div class="color-card bg-green">
+          <div class="title">تەواوبوو</div>
+          <div class="val" id="dCompletedOrders">0</div>
+        </div>
+        <div class="color-card bg-pink">
+          <div class="title">کۆی فرۆشتنی کتێب</div>
+          <div class="val" id="dTotalSales">0</div>
+          <div class="sub">IQD (بێ گەیاندن)</div>
+        </div>
+
+        <!-- ڕیزی دووەم -->
+        <div class="color-card bg-teal clickable" onclick="openDeliveryModal()" title="کلیک بکە بۆ بینینی خشتەی وردەکاریی گەیاندن">
+          <div class="title">کۆی گەیاندنەکان 🚚 (کلیک بکە)</div>
+          <div class="val" id="dDeliveryTotal">0</div>
+          <div class="sub" id="dDeliverySub">0 IQD (0 گەیاندن)</div>
+        </div>
+
+        <div class="color-card bg-indigo clickable" onclick="openDeliveryModal()" title="کلیک بکە بۆ بینینی خشتەی خێر">
+          <div class="title">خێری تۆ لە گەیاندن ✨</div>
+          <div class="val" id="dDeliveryProfitTotal">0</div>
+          <div class="sub">IQD (چووەتە ناو قازانج)</div>
+        </div>
+
+        <div class="color-card bg-orange">
+          <div class="title">کۆی قازانجی گشتی 💎</div>
+          <div class="val" id="dNetProfit">0</div>
+          <div class="sub">فرۆشتن + خێری گەیاندن - خەرجی</div>
+        </div>
+
+        <div class="color-card bg-red">
+          <div class="title">پارەی نەگەیشتوو لە کڕیار</div>
+          <div class="val" id="dPendingPay">0</div>
+          <div class="sub">IQD (کتێب + گەیاندن)</div>
+        </div>
+
+        <!-- ڕیزی سێیەم: گەڕاندنەوەی قەرز و ئامێرەکان -->
+        <div class="color-card bg-red">
+          <div class="title">قەرزی ماوە (قەرزی کراوە) 📌</div>
+          <div class="val" id="dDebtTotal">0</div>
+          <div class="sub">IQD (قەرزی سەر خۆمان)</div>
+        </div>
+
+        <div class="color-card bg-indigo">
+          <div class="title">نرخی جیهاز و ئامێرەکان 🖥️</div>
+          <div class="val" id="dAssetsCost">0</div>
+          <div class="sub">IQD (بەهای سەرمایە)</div>
+        </div>
+
+        <div class="color-card bg-teal">
+          <div class="title">کۆی خەرجییەکان (ماڵ و کار) 💳</div>
+          <div class="val" id="dExpenseTotal">0</div>
+          <div class="sub">IQD (لە بەشی دارایی)</div>
+        </div>
+
+        <div class="color-card bg-purple">
+          <div class="title">ناوەندی نرخی داواکاری 📈</div>
+          <div class="val" id="dAvgOrder">0</div>
+          <div class="sub">IQD بۆ هەر کتێبێک</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- داواکارییەکان -->
+    <div id="ordersTab" class="view-panel" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+        <h3>داواکارییە چالاکەکان</h3>
+        <button class="btn btn-primary btn-sm" onclick="openOrderModal()">+ داواکاری نوێ</button>
+      </div>
+      <input type="text" id="orderSearch" class="form-control" style="margin-bottom: 0.8rem;" placeholder="گەڕان بەپێی ناو، مۆبایل، شار..." oninput="renderOrders()">
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>کڕیار / ناونیشان</th>
+              <th>کتێب و پەڕەکان</th>
+              <th>وێنە</th>
+              <th>نرخی کتێب</th>
+              <th>گەیاندن (خێر)</th>
+              <th>کۆی گشتی بۆ کڕیار</th>
+              <th>دۆخ</th>
+              <th>قۆناغەکان</th>
+              <th>کردارەکان</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- تەواوبووەکان -->
+    <div id="completedTab" class="view-panel" style="display: none;">
+      <h3 style="margin-bottom:0.8rem;">تەواوبووەکان (ئەرشیف)</h3>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>کڕیار</th>
+              <th>کتێب</th>
+              <th>نرخی کتێب</th>
+              <th>گەیاندن (خێر)</th>
+              <th>کردار</th>
+            </tr>
+          </thead>
+          <tbody id="completedTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- جۆرەکان -->
+    <div id="settingsTab" class="view-panel" style="display: none;">
+      <div class="grid-2">
+        <div style="background:#fff; padding:1rem; border-radius:12px; border:1px solid var(--border);">
+          <h4>جۆرەکانی داواکاری / کتێب</h4>
+          <div style="display:flex; gap:0.4rem; margin:0.8rem 0;">
+            <input type="text" id="newBookInput" class="form-control" placeholder="ناوی جۆرەکە...">
+            <button class="btn btn-primary btn-sm" onclick="addBookType()">زیادکردن</button>
+          </div>
+          <div id="bookTypesContainer"></div>
+        </div>
+        <div style="background:#fff; padding:1rem; border-radius:12px; border:1px solid var(--border);">
+          <h4>نەوعیەتی پەڕەکان و ئاستەکان</h4>
+          <div style="display:flex; gap:0.4rem; margin:0.8rem 0;">
+            <input type="text" id="newPageInput" class="form-control" placeholder="ناوی پەڕەکە...">
+            <button class="btn btn-primary btn-sm" onclick="addPageType()">زیادکردن</button>
+          </div>
+          <div id="pageTypesContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- دارایی -->
+    <div id="financeTab" class="view-panel" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+        <h3>حسابات و دارایی (FIB)</h3>
+        <button class="btn btn-primary btn-sm" onclick="openFinanceModal()">+ تۆمارکردن</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>وەسف</th>
+              <th>جۆر</th>
+              <th>بڕ (IQD)</th>
+              <th>شێواز</th>
+              <th>کردار</th>
+            </tr>
+          </thead>
+          <tbody id="financeTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ئامێرەکان -->
+    <div id="assetsTab" class="view-panel" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+        <h3>ئامێر و سامان</h3>
+        <button class="btn btn-primary btn-sm" onclick="openAssetModal()">+ ئامێری نوێ</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>ناو</th>
+              <th>نرخ (IQD)</th>
+              <th>دۆخ</th>
+              <th>کردار</th>
+            </tr>
+          </thead>
+          <tbody id="assetsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- تەنەکەی خۆڵ -->
+    <div id="trashTab" class="view-panel" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+        <h3 style="color:var(--c-red);">تەنەکەی خۆڵ</h3>
+        <button class="btn btn-danger btn-sm" onclick="emptyTrash()">بەتاڵکردنی هەمووی</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>بەش</th>
+              <th>ناونیشان</th>
+              <th>کێ سڕییەوە</th>
+              <th>کردار</th>
+            </tr>
+          </thead>
+          <tbody id="trashTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- مۆداڵی داواکاری -->
+  <div id="orderModal" class="modal">
+    <div class="modal-box">
+      <h3 id="orderModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">داواکاری</h3>
+      <input type="hidden" id="editOrderId">
+      <div class="grid-2">
+        <div>
+          <label style="font-size:12px; font-weight:bold;">ناوی کڕیار:</label>
+          <input type="text" id="mCustName" class="form-control">
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold;">تەلەفۆن:</label>
+          <input type="text" id="mCustPhone" class="form-control">
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:0.4rem;">
+        <div>
+          <label style="font-size:12px; font-weight:bold;">شار و ناونیشان:</label>
+          <input type="text" id="mCustAddress" class="form-control">
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold;">ناوی منداڵ و تەمەن:</label>
+          <input type="text" id="mChildInfo" class="form-control">
+        </div>
+      </div>
+
+      <!-- خانەی پارەی گەیاندن و خێری گەیاندن دوای ناونیشان -->
+      <div class="grid-2" style="margin-top:0.4rem; background: #eef2ff; padding: 0.6rem; border-radius: 8px; border: 1px dashed var(--c-purple);">
+        <div>
+          <label style="font-size:12px; font-weight:bold; color: var(--c-purple);">پارەی گەیاندن (IQD):</label>
+          <input type="text" id="mDeliveryFee" class="form-control" placeholder="نموونە: ٥٠٠٠ یان 5000">
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold; color: var(--c-green);">خێری تۆ لە گەیاندن (IQD):</label>
+          <input type="text" id="mDeliveryProfit" class="form-control" placeholder="نموونە: ١٠٠٠ یان 500">
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:0.4rem;">
+        <div>
+          <label style="font-size:12px; font-weight:bold;">جۆری کتێب:</label>
+          <select id="mBookTypeSelect" class="form-control"></select>
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold;">نرخی کتێب (IQD):</label>
+          <input type="text" id="mOrderPrice" class="form-control" placeholder="نموونە: ٣٥٠٠٠">
+        </div>
+      </div>
+      <div style="margin-top:0.6rem;">
+        <label style="font-size:12px; font-weight:bold;">پەڕەکان (سەحی لێبدە):</label>
+        <div class="pages-checklist-grid" id="modalPagesChecklist"></div>
+      </div>
+      <div class="grid-2" style="margin-top:0.4rem;">
+        <div>
+          <label style="font-size:12px; font-weight:bold;">دۆخی پارە:</label>
+          <select id="mPaymentStatus" class="form-control">
+            <option value="unpaid">نەدراوە (قەرز)</option>
+            <option value="paid">وەرگیراوە</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold;">ئەپلۆدی وێنە:</label>
+          <input type="file" id="mOrderImages" class="form-control" multiple accept="image/*" onchange="handleImageUpload(event)">
+        </div>
+      </div>
+      <div id="imagePreviewContainer" style="display:flex; gap:4px; flex-wrap:wrap; margin:0.4rem 0;"></div>
+      <div style="margin-top:0.4rem;">
+        <label style="font-size:12px; font-weight:bold;">تێبینی:</label>
+        <textarea id="mOrderNotes" class="form-control" rows="2"></textarea>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.4rem; margin-top:0.8rem;">
+        <button class="btn btn-secondary btn-sm" onclick="closeOrderModal()">داخستن</button>
+        <button class="btn btn-primary btn-sm" id="btnSaveOrder" onclick="saveOrder()">پاشەکەوتکردن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مۆداڵی خشتەی وردەکاریی گەیاندنەکان -->
+  <div id="deliveryModal" class="modal">
+    <div class="modal-box" style="max-width:680px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="color:var(--c-teal);">🚚 خشتەی وردەکاریی گەیاندن و قازانج</h3>
+        <button class="btn btn-secondary btn-sm" onclick="closeDeliveryModal()">داخستن</button>
+      </div>
+      <div class="table-card" style="margin-top:0;">
+        <table>
+          <thead>
+            <tr>
+              <th>کڕیار / شار</th>
+              <th>پارەی گەیاندن</th>
+              <th>خێری تۆ</th>
+              <th>پشکی کۆمپانیا</th>
+              <th>دۆخی پارە</th>
+            </tr>
+          </thead>
+          <tbody id="deliveryTableBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:1rem; padding:0.8rem; background:#f8fafc; border-radius:8px; display:flex; justify-content:space-around; font-size:13px; font-weight:bold;">
+        <span>کۆی پارەی گەیاندن: <span id="mTotalDelivSum" style="color:var(--c-purple);">0</span> IQD</span>
+        <span>کۆی خێری تۆ: <span id="mTotalDelivProfitSum" style="color:var(--c-green);">0</span> IQD</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- مۆداڵی دارایی -->
+  <div id="financeModal" class="modal">
+    <div class="modal-box" style="max-width:400px;">
+      <h3 id="financeModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">تۆماری دارایی</h3>
+      <input type="hidden" id="editFinId">
+      <div style="margin-bottom:0.6rem;">
+        <label style="font-size:12px; font-weight:bold;">وەسف:</label>
+        <input type="text" id="finTitle" class="form-control">
+      </div>
+      <div class="grid-2">
+        <div>
+          <label style="font-size:12px; font-weight:bold;">جۆر:</label>
+          <select id="finType" class="form-control">
+            <option value="expense">خەرجی</option>
+            <option value="debt">قەرز</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold;">بڕ (IQD):</label>
+          <input type="text" id="finAmount" class="form-control" placeholder="نموونە: ٢٥٠٠٠">
+        </div>
+      </div>
+      <div style="margin-top:0.6rem;">
+        <label style="font-size:12px; font-weight:bold;">شێواز:</label>
+        <select id="finMethod" class="form-control">
+          <option value="FIB">FIB</option>
+          <option value="کاش">کاش</option>
+        </select>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.4rem; margin-top:0.8rem;">
+        <button class="btn btn-secondary btn-sm" onclick="closeFinanceModal()">داخستن</button>
+        <button class="btn btn-primary btn-sm" onclick="saveFinance()">پاشەکەوتکردن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مۆداڵی ئامێر -->
+  <div id="assetModal" class="modal">
+    <div class="modal-box" style="max-width:400px;">
+      <h3 id="assetModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">ئامێر</h3>
+      <input type="hidden" id="editAssetId">
+      <div style="margin-bottom:0.6rem;">
+        <label style="font-size:12px; font-weight:bold;">ناوی ئامێر:</label>
+        <input type="text" id="assetName" class="form-control">
+      </div>
+      <div class="grid-2">
+        <div>
+          <label style="font-size:12px; font-weight:bold;">نرخ (IQD):</label>
+          <input type="text" id="assetPrice" class="form-control" placeholder="نموونە: ١٥٠٠٠٠">
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold;">دۆخ:</label>
+          <input type="text" id="assetCond" class="form-control" value="چالاکە">
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.4rem; margin-top:0.8rem;">
+        <button class="btn btn-secondary btn-sm" onclick="closeAssetModal()">داخستن</button>
+        <button class="btn btn-primary btn-sm" onclick="saveAsset()">پاشەکەوتکردن</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // فەنکشنی زیرەک بۆ گۆڕینی ژمارەی کوردی و عەرەبی
+    function parseKurdishNumber(str) {
+      if (!str) return 0;
+      const digits = [/٠|۰/g, /١|۱/g, /٢|۲/g, /٣|۳/g, /٤|۴/g, /٥|۵/g, /٦|۶/g, /٧|۷/g, /٨|۸/g, /٩|۹/g];
+      let clean = String(str).trim();
+      for (let i = 0; i < 10; i++) {
+        clean = clean.replace(digits[i], i);
+      }
+      clean = clean.replace(/,/g, '').replace(/،/g, '');
+      const num = Number(clean);
+      return isNaN(num) ? 0 : num;
+    }
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSUDoeRxAby4H-3T_5hFpN83xavJj0WGo",
+      authDomain: "tiny-hands-9a93a.firebaseapp.com",
+      databaseURL: "https://tiny-hands-9a93a-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "tiny-hands-9a93a",
+      storageBucket: "tiny-hands-9a93a.firebasestorage.app",
+      messagingSenderId: "647375197852",
+      appId: "1:647375197852:web:97065ea5039eac8ccdff59"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let currentUser = localStorage.getItem('th_user') || null;
+    let orders = [];
+    let finances = [];
+    let assets = [];
+    let trash = [];
+    let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
+    let pageTypes = ["ستاندارت (فێرکاری گشتی)", "پەڕەی ژمارە و ئەندازە", "پەڕەی ئاژەڵان و ڕەنگەکان", "پەڕەی ناوی تایبەتی منداڵ", "پەڕەی جیاکردنەوەی شێوەکان", "پەڕەی تەقەڵی دەستی", "پەڕەی ژماردنی میوەکان", "پەڕەی کەشوهەوا"];
+    let currentImages = [];
+
+    function syncFromCloud() {
+      const cachedOrders = localStorage.getItem('th_orders');
+      if (cachedOrders) {
+        try {
+          orders = JSON.parse(cachedOrders);
+          finances = JSON.parse(localStorage.getItem('th_finances') || '[]');
+          assets = JSON.parse(localStorage.getItem('th_assets') || '[]');
+          trash = JSON.parse(localStorage.getItem('th_trash') || '[]');
+          bookTypes = JSON.parse(localStorage.getItem('th_book_types') || JSON.stringify(bookTypes));
+          pageTypes = JSON.parse(localStorage.getItem('th_page_types') || JSON.stringify(pageTypes));
+          refreshAllUI();
+        } catch(e) {}
+      }
+
+      db.ref('tinyhands_data').on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+          orders = val.orders || [];
+          finances = val.finances || [];
+          assets = val.assets || [];
+          trash = val.trash || [];
+          bookTypes = val.bookTypes || bookTypes;
+          pageTypes = val.pageTypes || pageTypes;
+
+          localStorage.setItem('th_orders', JSON.stringify(orders));
+          localStorage.setItem('th_finances', JSON.stringify(finances));
+          localStorage.setItem('th_assets', JSON.stringify(assets));
+          localStorage.setItem('th_trash', JSON.stringify(trash));
+          localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
+          localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
+          
+          refreshAllUI();
+        }
+      });
+    }
+
+    function syncToCloud() {
+      localStorage.setItem('th_orders', JSON.stringify(orders));
+      localStorage.setItem('th_finances', JSON.stringify(finances));
+      localStorage.setItem('th_assets', JSON.stringify(assets));
+      localStorage.setItem('th_trash', JSON.stringify(trash));
+      localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
+      localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
+      refreshAllUI();
+
+      db.ref('tinyhands_data').set({
+        orders, finances, assets, trash, bookTypes, pageTypes
+      });
+    }
+
+    function refreshAllUI() {
+      renderOrders();
+      renderCompleted();
+      renderSettings();
+      renderFinances();
+      renderAssets();
+      renderTrash();
+      calculateStats();
+    }
+
+    function login() {
+      const user = document.getElementById('userSelect').value;
+      const pass = document.getElementById('passInput').value;
+      if (pass === 'tiny4321') {
+        currentUser = user;
+        localStorage.setItem('th_user', user);
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('currentUserName').innerText = currentUser;
+        syncFromCloud();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('th_user');
+      location.reload();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-panel').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.nav-pill').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).style.display = 'block';
+      event.currentTarget.classList.add('active');
+    }
+
+    // تەنەکەی خۆڵ
+    function moveToTrash(type, item, title) {
+      trash.unshift({
+        trashId: Date.now(),
+        type, originalItem: item, title,
+        deletedBy: currentUser,
+        deletedAt: new Date().toLocaleDateString('ku-IQ')
+      });
+      syncToCloud();
+    }
+
+    function restoreFromTrash(trashId) {
+      const idx = trash.findIndex(t => t.trashId === trashId);
+      if (idx === -1) return;
+      const t = trash[idx];
+      if (t.type === 'داواکاری') orders.unshift(t.originalItem);
+      if (t.type === 'دارایی') finances.unshift(t.originalItem);
+      if (t.type === 'ئامێر') assets.unshift(t.originalItem);
+      if (t.type === 'جۆری کتێب') bookTypes.push(t.originalItem);
+      if (t.type === 'نەوعیەتی پەڕە') pageTypes.push(t.originalItem);
+      trash.splice(idx, 1);
+      syncToCloud();
+    }
+
+    function emptyTrash() {
+      if(confirm('تەنەکەی خۆڵ بە یەکجاری بەتاڵ بکرێتەوە؟')) {
+        trash = [];
+        syncToCloud();
+      }
+    }
+
+    function renderTrash() {
+      document.getElementById('trashCount').innerText = trash.length;
+      document.getElementById('trashTableBody').innerHTML = trash.map(t => `
+        <tr>
+          <td><strong style="color:var(--c-purple);">${t.type}</strong></td>
+          <td>${t.title}</td>
+          <td>${t.deletedBy}</td>
+          <td><button class="btn btn-sm btn-success" onclick="restoreFromTrash(${t.trashId})">گەڕاندنەوە ↩</button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" style="text-align:center;">بەتاڵە</td></tr>';
+    }
+
+    // بەڕێوەبردنی وێنە
+    function handleImageUpload(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 450;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
+            canvas.height = (img.width > MAX_WIDTH) ? (img.height * scaleSize) : img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const compressedUrl = canvas.toDataURL('image/jpeg', 0.55);
+            currentImages.push(compressedUrl);
+            renderPreviews();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderPreviews() {
+      document.getElementById('imagePreviewContainer').innerHTML = currentImages.map((src, i) => `
+        <div style="position:relative;">
+          <img src="${src}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">
+          <span onclick="currentImages.splice(${i},1);renderPreviews();" style="position:absolute; top:-5px; right:-5px; background:red; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; cursor:pointer; text-align:center;">×</span>
+        </div>
+      `).join('');
+    }
+
+    // داواکارییەکان
+    function openOrderModal(id = null) {
+      document.getElementById('editOrderId').value = id || '';
+      document.getElementById('mBookTypeSelect').innerHTML = bookTypes.map(b => `<option value="${b}">${b}</option>`).join('');
+
+      if(id) {
+        const o = orders.find(x => x.id === id);
+        document.getElementById('orderModalTitle').innerText = 'دەستکاری داواکاری';
+        document.getElementById('mCustName').value = o.name;
+        document.getElementById('mCustPhone').value = o.phone;
+        document.getElementById('mCustAddress').value = o.address;
+        document.getElementById('mChildInfo').value = o.childInfo;
+        document.getElementById('mDeliveryFee').value = o.deliveryFee || 0;
+        document.getElementById('mDeliveryProfit').value = o.deliveryProfit || 0;
+        document.getElementById('mOrderPrice').value = o.price;
+        document.getElementById('mPaymentStatus').value = o.payment;
+        document.getElementById('mOrderNotes').value = o.notes;
+        document.getElementById('mBookTypeSelect').value = o.bookType || bookTypes[0];
+        currentImages = o.images || [];
+
+        document.getElementById('modalPagesChecklist').innerHTML = pageTypes.map(p => `
+          <label class="page-check-item">
+            <input type="checkbox" value="${p}" ${(o.selectedPages || []).includes(p) ? 'checked' : ''}>
+            <span>${p}</span>
+          </label>
+        `).join('');
+      } else {
+        document.getElementById('orderModalTitle').innerText = 'داواکاری نوێ';
+        document.getElementById('mCustName').value = '';
+        document.getElementById('mCustPhone').value = '';
+        document.getElementById('mCustAddress').value = '';
+        document.getElementById('mChildInfo').value = '';
+        document.getElementById('mDeliveryFee').value = '';
+        document.getElementById('mDeliveryProfit').value = '';
+        document.getElementById('mOrderPrice').value = '';
+        document.getElementById('mPaymentStatus').value = 'unpaid';
+        document.getElementById('mOrderNotes').value = '';
+        currentImages = [];
+
+        document.getElementById('modalPagesChecklist').innerHTML = pageTypes.map(p => `
+          <label class="page-check-item">
+            <input type="checkbox" value="${p}">
+            <span>${p}</span>
+          </label>
+        `).join('');
+      }
+      renderPreviews();
+      document.getElementById('orderModal').style.display = 'flex';
+    }
+
+    function closeOrderModal() { document.getElementById('orderModal').style.display = 'none'; }
+
+    function saveOrder() {
+      const id = document.getElementById('editOrderId').value;
+      const name = document.getElementById('mCustName').value.trim();
+      const phone = document.getElementById('mCustPhone').value.trim();
+      const address = document.getElementById('mCustAddress').value.trim();
+      const childInfo = document.getElementById('mChildInfo').value.trim();
+      
+      const deliveryFee = parseKurdishNumber(document.getElementById('mDeliveryFee').value);
+      const deliveryProfit = parseKurdishNumber(document.getElementById('mDeliveryProfit').value);
+      const price = parseKurdishNumber(document.getElementById('mOrderPrice').value);
+      
+      const payment = document.getElementById('mPaymentStatus').value;
+      const notes = document.getElementById('mOrderNotes').value.trim();
+      const bookType = document.getElementById('mBookTypeSelect').value;
+
+      const selectedPages = [];
+      document.querySelectorAll('#modalPagesChecklist input[type="checkbox"]:checked').forEach(cb => selectedPages.push(cb.value));
+
+      if (!name) return alert('تکایە ناوی کڕیار بنووسە');
+
+      if(id) {
+        const o = orders.find(x => x.id == id);
+        o.name = name; o.phone = phone; o.address = address;
+        o.childInfo = childInfo; 
+        o.price = price; 
+        o.deliveryFee = deliveryFee;
+        o.deliveryProfit = deliveryProfit;
+        o.payment = payment;
+        o.notes = notes; o.bookType = bookType; o.selectedPages = selectedPages;
+        o.images = currentImages;
+      } else {
+        orders.unshift({
+          id: Date.now(), name, phone, address, childInfo, 
+          price, deliveryFee, deliveryProfit,
+          payment, notes, bookType,
+          selectedPages, images: currentImages, completed: false,
+          stages: { data: false, design: false, print: false, ready: false, sent: false }
+        });
+      }
+
+      closeOrderModal();
+      syncToCloud();
+    }
+
+    function deleteOrder(id) {
+      const idx = orders.findIndex(x => x.id === id);
+      if(idx !== -1) {
+        const item = orders[idx];
+        orders.splice(idx, 1);
+        moveToTrash('داواکاری', item, item.name);
+      }
+    }
+
+    function toggleStage(id, stg) {
+      const o = orders.find(x => x.id === id);
+      if(o) { o.stages[stg] = !o.stages[stg]; syncToCloud(); }
+    }
+
+    function markAsCompleted(id) {
+      const o = orders.find(x => x.id === id);
+      if(o) {
+        o.completed = true;
+        syncToCloud();
+      }
+    }
+
+    function renderOrders() {
+      const q = document.getElementById('orderSearch').value.toLowerCase();
+      const act = orders.filter(o => !o.completed && (o.name.toLowerCase().includes(q) || o.phone.includes(q) || o.address.toLowerCase().includes(q)));
+
+      document.getElementById('ordersTableBody').innerHTML = act.map(o => {
+        const delFee = o.deliveryFee || 0;
+        const delProf = o.deliveryProfit || 0;
+        const totalWithDel = (o.price || 0) + delFee;
+
+        return `
+        <tr>
+          <td><strong>${o.name}</strong><br><small>${o.phone} | ${o.address}</small></td>
+          <td><strong>${o.bookType}</strong><br><small style="color:var(--text-muted);">${(o.selectedPages||[]).join(', ')}</small></td>
+          <td>${(o.images||[]).length ? `<img src="${o.images[0]}" style="width:30px; height:30px; border-radius:4px; object-fit:cover;">` : 'بێ وێنە'}</td>
+          <td><strong>${(o.price || 0).toLocaleString()}</strong></td>
+          <td>
+            <span style="color:var(--c-purple); font-weight:bold;">${delFee.toLocaleString()}</span><br>
+            <small style="color:var(--c-green); font-weight:bold;">(خێر: ${delProf.toLocaleString()})</small>
+          </td>
+          <td><strong style="color:var(--c-indigo);">${totalWithDel.toLocaleString()} IQD</strong></td>
+          <td><span style="font-size:11px; padding:2px 6px; border-radius:8px; background:${o.payment==='paid'?'#dcfce7':'#fee2e2'}">${o.payment==='paid'?'وەرگیراوە':'قەرز'}</span></td>
+          <td>
+            <div style="font-size:11px; display:flex; flex-direction:column; gap:2px;">
+              <label><input type="checkbox" ${o.stages.data ? 'checked' : ''} onchange="toggleStage(${o.id}, 'data')"> داتا</label>
+              <label><input type="checkbox" ${o.stages.design ? 'checked' : ''} onchange="toggleStage(${o.id}, 'design')"> دیزاین</label>
+              <label><input type="checkbox" ${o.stages.print ? 'checked' : ''} onchange="toggleStage(${o.id}, 'print')"> پرێنت</label>
+              <label><input type="checkbox" ${o.stages.ready ? 'checked' : ''} onchange="toggleStage(${o.id}, 'ready')"> ئامادە</label>
+              <label><input type="checkbox" ${o.stages.sent ? 'checked' : ''} onchange="toggleStage(${o.id}, 'sent')"> نێردرا</label>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <button class="btn btn-sm btn-success" onclick="markAsCompleted(${o.id})">تەواو</button>
+              <button class="btn btn-sm btn-secondary" onclick="openOrderModal(${o.id})">دەستکاری</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">سڕینەوە</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="9" style="text-align:center;">داواکاری چالاک نییە</td></tr>';
+    }
+
+    function renderCompleted() {
+      const comp = orders.filter(o => o.completed);
+      document.getElementById('completedTableBody').innerHTML = comp.map(o => {
+        const delFee = o.deliveryFee || 0;
+        const delProf = o.deliveryProfit || 0;
+        return `
+        <tr>
+          <td><strong>${o.name}</strong></td>
+          <td>${o.bookType}</td>
+          <td>${(o.price || 0).toLocaleString()}</td>
+          <td>${delFee.toLocaleString()} <small style="color:var(--c-green);">(خێر: ${delProf.toLocaleString()})</small></td>
+          <td>
+            <button class="btn btn-sm btn-warning" onclick="orders.find(x=>x.id===${o.id}).completed=false;syncToCloud();">چالاککردنەوە</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">سڕینەوە</button>
+          </td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ داواکارییەک نییە</td></tr>';
+    }
+
+    // خشتەی وردەکاریی گەیاندن
+    function openDeliveryModal() {
+      let sumFee = 0;
+      let sumProf = 0;
+      const html = orders.map(o => {
+        const fee = o.deliveryFee || 0;
+        const prof = o.deliveryProfit || 0;
+        const companyShare = fee - prof;
+        sumFee += fee;
+        sumProf += prof;
+        return `
+        <tr>
+          <td><strong>${o.name}</strong><br><small>${o.address || '---'}</small></td>
+          <td style="color:var(--c-purple); font-weight:bold;">${fee.toLocaleString()} IQD</td>
+          <td style="color:var(--c-green); font-weight:bold;">${prof.toLocaleString()} IQD</td>
+          <td style="color:var(--text-muted); font-weight:bold;">${companyShare.toLocaleString()} IQD</td>
+          <td><span style="font-size:11px; padding:2px 6px; border-radius:6px; background:${o.payment==='paid'?'#dcfce7':'#fee2e2'}">${o.payment==='paid'?'وەرگیراوە':'قەرز'}</span></td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ گەیاندنێک نییە</td></tr>';
+
+      document.getElementById('deliveryTableBody').innerHTML = html;
+      document.getElementById('mTotalDelivSum').innerText = sumFee.toLocaleString();
+      document.getElementById('mTotalDelivProfitSum').innerText = sumProf.toLocaleString();
+      document.getElementById('deliveryModal').style.display = 'flex';
+    }
+
+    function closeDeliveryModal() {
+      document.getElementById('deliveryModal').style.display = 'none';
+    }
+
+    // جۆرەکان
+    function addBookType() {
+      const v = document.getElementById('newBookInput').value.trim();
+      if(v) { bookTypes.push(v); document.getElementById('newBookInput').value=''; syncToCloud(); }
+    }
+    function editBookType(i) {
+      const u = prompt('دەستکاری ناوی کتێب:', bookTypes[i]);
+      if(u && u.trim() !== '') { bookTypes[i] = u.trim(); syncToCloud(); }
+    }
+    function deleteBookType(i) {
+      const item = bookTypes[i];
+      bookTypes.splice(i, 1);
+      moveToTrash('جۆری کتێب', item, item);
+    }
+
+    function addPageType() {
+      const v = document.getElementById('newPageInput').value.trim();
+      if(v) { pageTypes.push(v); document.getElementById('newPageInput').value=''; syncToCloud(); }
+    }
+    function editPageType(i) {
+      const u = prompt('دەستکاری ناوی پەڕە:', pageTypes[i]);
+      if(u && u.trim() !== '') { pageTypes[i] = u.trim(); syncToCloud(); }
+    }
+    function deletePageType(i) {
+      const item = pageTypes[i];
+      pageTypes.splice(i, 1);
+      moveToTrash('نەوعیەتی پەڕە', item, item);
+    }
+
+    function renderSettings() {
+      document.getElementById('bookTypesContainer').innerHTML = bookTypes.map((b, i) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
+          <span>${b}</span>
+          <div style="display:flex; gap:4px;">
+            <button class="btn btn-sm btn-secondary" onclick="editBookType(${i})">دەستکاری</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteBookType(${i})">سڕینەوە</button>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('pageTypesContainer').innerHTML = pageTypes.map((p, i) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
+          <span>${p}</span>
+          <div style="display:flex; gap:4px;">
+            <button class="btn btn-sm btn-secondary" onclick="editPageType(${i})">دەستکاری</button>
+            <button class="btn btn-sm btn-danger" onclick="deletePageType(${i})">سڕینەوە</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // دارایی و ئامێر
+    function openFinanceModal(id = null) {
+      document.getElementById('editFinId').value = id || '';
+      if(id) {
+        const f = finances.find(x => x.id === id);
+        document.getElementById('financeModalTitle').innerText = 'دەستکاری دارایی';
+        document.getElementById('finTitle').value = f.title;
+        document.getElementById('finType').value = f.type;
+        document.getElementById('finAmount').value = f.amount;
+        document.getElementById('finMethod').value = f.method;
+      } else {
+        document.getElementById('financeModalTitle').innerText = 'تۆماری دارایی نوێ';
+        document.getElementById('finTitle').value = '';
+        document.getElementById('finAmount').value = '';
+      }
+      document.getElementById('financeModal').style.display = 'flex';
+    }
+    function closeFinanceModal() { document.getElementById('financeModal').style.display = 'none'; }
+    function saveFinance() {
+      const id = document.getElementById('editFinId').value;
+      const title = document.getElementById('finTitle').value.trim();
+      const type = document.getElementById('finType').value;
+      const amount = parseKurdishNumber(document.getElementById('finAmount').value);
+      const method = document.getElementById('finMethod').value;
+      if(!title || !amount) return;
+
+      if(id) {
+        const f = finances.find(x => x.id == id);
+        f.title = title; f.type = type; f.amount = amount; f.method = method;
+      } else {
+        finances.unshift({ id: Date.now(), title, type, amount, method });
+      }
+      closeFinanceModal();
+      syncToCloud();
+    }
+    function deleteFinance(id) {
+      const idx = finances.findIndex(x => x.id === id);
+      if(idx !== -1) {
+        const item = finances[idx];
+        finances.splice(idx, 1);
+        moveToTrash('دارایی', item, item.title);
+      }
+    }
+    function renderFinances() {
+      document.getElementById('financeTableBody').innerHTML = finances.map((f) => `
+        <tr>
+          <td><strong>${f.title}</strong></td>
+          <td>${f.type==='expense'?'خەرجی':'قەرز'}</td>
+          <td>${f.amount.toLocaleString()}</td>
+          <td>${f.method}</td>
+          <td>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-sm btn-secondary" onclick="openFinanceModal(${f.id})">دەستکاری</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteFinance(${f.id})">سڕینەوە</button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ تۆمارێک نییە</td></tr>';
+    }
+
+    function openAssetModal(id = null) {
+      document.getElementById('editAssetId').value = id || '';
+      if(id) {
+        const a = assets.find(x => x.id === id);
+        document.getElementById('assetModalTitle').innerText = 'دەستکاری ئامێر';
+        document.getElementById('assetName').value = a.name;
+        document.getElementById('assetPrice').value = a.price;
+        document.getElementById('assetCond').value = a.cond;
+      } else {
+        document.getElementById('assetModalTitle').innerText = 'ئامێری نوێ';
+        document.getElementById('assetName').value = '';
+        document.getElementById('assetPrice').value = '';
+        document.getElementById('assetCond').value = 'چالاکە';
+      }
+      document.getElementById('assetModal').style.display = 'flex';
+    }
+    function closeAssetModal() { document.getElementById('assetModal').style.display = 'none'; }
+    function saveAsset() {
+      const id = document.getElementById('editAssetId').value;
+      const name = document.getElementById('assetName').value.trim();
+      const price = parseKurdishNumber(document.getElementById('assetPrice').value);
+      const cond = document.getElementById('assetCond').value;
+      if(!name) return;
+
+      if(id) {
+        const a = assets.find(x => x.id == id);
+        a.name = name; a.price = price; a.cond = cond;
+      } else {
+        assets.unshift({ id: Date.now(), name, price, cond });
+      }
+      closeAssetModal();
+      syncToCloud();
+    }
+    function deleteAsset(id) {
+      const idx = assets.findIndex(x => x.id === id);
+      if(idx !== -1) {
+        const item = assets[idx];
+        assets.splice(idx, 1);
+        moveToTrash('ئامێر', item, item.name);
+      }
+    }
+    function renderAssets() {
+      document.getElementById('assetsTableBody').innerHTML = assets.map((a) => `
+        <tr>
+          <td><strong>${a.name}</strong></td>
+          <td>${a.price.toLocaleString()}</td>
+          <td>${a.cond}</td>
+          <td>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-sm btn-secondary" onclick="openAssetModal(${a.id})">دەستکاری</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteAsset(${a.id})">سڕینەوە</button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" style="text-align:center;">هیچ ئامێرێک نییە</td></tr>';
+    }
+
+    // ئامارەکان (داشبۆرد)
+    function calculateStats() {
+      const totalSales = orders.reduce((s, o) => s + (o.price || 0), 0);
+      const deliveryOrders = orders.filter(o => (o.deliveryFee || 0) > 0);
+      const totalDeliveryFee = orders.reduce((s, o) => s + (o.deliveryFee || 0), 0);
+      const totalDeliveryProfit = orders.reduce((s, o) => s + (o.deliveryProfit || 0), 0);
+
+      // پارەی نەگەیشتوو لە کڕیار (کتێب + تەواوی گەیاندن)
+      const pending = orders.filter(o => o.payment === 'unpaid').reduce((s, o) => s + (o.price || 0) + (o.deliveryFee || 0), 0);
+      
+      // خەرجی و قەرزەکانی ناو بەشی دارایی
+      const exp = finances.filter(f => f.type === 'expense').reduce((s, f) => s + (f.amount || 0), 0);
+      const debt = finances.filter(f => f.type === 'debt').reduce((s, f) => s + (f.amount || 0), 0);
+      const assetsVal = assets.reduce((s, a) => s + (a.price || 0), 0);
+
+      // قازانجی گشتی: فرۆشتنی کتێب + خێری گەیاندن - خەرجییەکان
+      const netProfit = (totalSales + totalDeliveryProfit) - exp;
+      const avgOrder = orders.length > 0 ? Math.round(totalSales / orders.length) : 0;
+
+      // پڕکردنەوەی کارتەکانی داشبۆرد
+      document.getElementById('dTotalOrders').innerText = orders.length;
+      document.getElementById('dActiveOrders').innerText = orders.filter(o => !o.completed).length;
+      document.getElementById('dCompletedOrders').innerText = orders.filter(o => o.completed).length;
+      document.getElementById('dTotalSales').innerText = totalSales.toLocaleString() + ' IQD';
+      
+      document.getElementById('dDeliveryTotal').innerText = totalDeliveryFee.toLocaleString() + ' IQD';
+      document.getElementById('dDeliverySub').innerText = `${deliveryOrders.length} داواکاری گەیاندن`;
+      
+      document.getElementById('dDeliveryProfitTotal').innerText = totalDeliveryProfit.toLocaleString() + ' IQD';
+      document.getElementById('dPendingPay').innerText = pending.toLocaleString() + ' IQD';
+      document.getElementById('dNetProfit').innerText = netProfit.toLocaleString() + ' IQD';
+      
+      // کارتە گەڕاوەکان: قەرز و ئامێر و خەرجی
+      document.getElementById('dDebtTotal').innerText = debt.toLocaleString() + ' IQD';
+      document.getElementById('dAssetsCost').innerText = assetsVal.toLocaleString() + ' IQD';
+      document.getElementById('dExpenseTotal').innerText = exp.toLocaleString() + ' IQD';
+      document.getElementById('dAvgOrder').innerText = avgOrder.toLocaleString() + ' IQD';
+    }
+
+    window.onload = () => {
+      if(!currentUser) {
+        document.getElementById('loginOverlay').style.display = 'flex';
+      } else {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('currentUserName').innerText = currentUser;
+        syncFromCloud();
+      }
+    };
+  </script>
+</body>
+</html>
