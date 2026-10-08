@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tiny Hands ✋ | سیستەمی بەڕێوەبردن</title>
 
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%237042f8'/><text y='68' x='50' font-size='55' text-anchor='middle'>✋</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%237042f8'/><text y='68' x='50' font-size='55' text-anchor='middle'>✋</text></svg>">
+
   <!-- کلاودی فایەربەیسی گووگڵ -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -156,6 +159,57 @@
     .bg-red    { background-color: var(--c-red); }
     .bg-orange { background-color: var(--c-orange); }
     .bg-indigo { background-color: var(--c-indigo); }
+
+    /* بەشی ئینسایت */
+    .insights-panel {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .insights-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .chart-bars-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 160px;
+      padding-top: 20px;
+      border-bottom: 2px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 38px;
+      gap: 4px;
+    }
+
+    .bar-stick {
+      width: 100%;
+      background: var(--c-blue);
+      border-radius: 6px 6px 0 0;
+      transition: height 0.4s ease;
+      min-height: 4px;
+    }
+
+    .bar-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: bold;
+    }
 
     .table-card {
       background: #fff;
@@ -318,8 +372,9 @@
   <!-- هێدەر -->
   <header>
     <div class="top-nav">
-      <button class="nav-pill active" onclick="switchTab('dashboardTab')">📊 داشبۆرد</button>
+      <button class="nav-pill active" onclick="switchTab('dashboardTab')">📊 داشبۆرد و ئینسایت</button>
       <button class="nav-pill" onclick="switchTab('ordersTab')">📦 داواکارییەکان</button>
+      <button class="nav-pill" onclick="switchTab('workExpensesTab')">🛠️ مەسرەف و کەرەستەی کار</button>
       <button class="nav-pill" onclick="switchTab('completedTab')">✅ تەواوبووەکان</button>
       <button class="nav-pill" onclick="switchTab('settingsTab')">📑 جۆرەکان و پەڕەکان</button>
       <button class="nav-pill" onclick="switchTab('financeTab')">💰 دارایی و FIB</button>
@@ -333,10 +388,34 @@
   </header>
 
   <div class="container">
-    <!-- داشبۆرد -->
+    <!-- داشبۆرد و ئینسایت -->
     <div id="dashboardTab" class="view-panel">
+      
+      <!-- بەشی کۆنتڕۆڵی داتا ئینسایت و فلتەری کات -->
+      <div class="insights-panel">
+        <div class="insights-header">
+          <div>
+            <h3 style="color: var(--c-purple);">📈 داتا ئینسایت و ڕەوتی فرۆشتن (Insights)</h3>
+            <span style="font-size: 12px; color: var(--text-muted);">شیکاری کاتیی فرۆشتن، خێر و مەسرەفەکان</span>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <select id="insightFilter" class="form-control" style="width:160px; font-weight:bold;" onchange="calculateStats()">
+              <option value="all">کۆی گشتی (هەمووی)</option>
+              <option value="this_month">ئەم مانگە</option>
+              <option value="last_month">مانگی ڕابردوو</option>
+              <option value="this_year">ئەمساڵ (2026)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- لاکێشەی ئاماری فرۆشتنی مانگەکان -->
+        <div class="chart-bars-container" id="monthlyChartBars">
+          <!-- باڕەکان بە کۆد پڕدەبنەوە -->
+        </div>
+      </div>
+
+      <!-- کارتی ئامارە ڕەنگاوڕەنگەکان -->
       <div class="colorful-grid">
-        <!-- ڕیزی یەکەم -->
         <div class="color-card bg-purple">
           <div class="title">کۆی داواکاری</div>
           <div class="val" id="dTotalOrders">0</div>
@@ -355,7 +434,6 @@
           <div class="sub">IQD (بێ گەیاندن)</div>
         </div>
 
-        <!-- ڕیزی دووەم -->
         <div class="color-card bg-teal clickable" onclick="openDeliveryModal()" title="کلیک بکە بۆ بینینی خشتەی وردەکاریی گەیاندن">
           <div class="title">کۆی گەیاندنەکان 🚚 (کلیک بکە)</div>
           <div class="val" id="dDeliveryTotal">0</div>
@@ -371,7 +449,7 @@
         <div class="color-card bg-orange">
           <div class="title">کۆی قازانجی گشتی 💎</div>
           <div class="val" id="dNetProfit">0</div>
-          <div class="sub">فرۆشتن + خێری گەیاندن - خەرجی</div>
+          <div class="sub">فرۆشتن + خێری گەیاندن - مەسرەف</div>
         </div>
 
         <div class="color-card bg-red">
@@ -380,7 +458,6 @@
           <div class="sub">IQD (کتێب + گەیاندن)</div>
         </div>
 
-        <!-- ڕیزی سێیەم: گەڕاندنەوەی قەرز و ئامێرەکان -->
         <div class="color-card bg-red">
           <div class="title">قەرزی ماوە (قەرزی کراوە) 📌</div>
           <div class="val" id="dDebtTotal">0</div>
@@ -390,13 +467,13 @@
         <div class="color-card bg-indigo">
           <div class="title">نرخی جیهاز و ئامێرەکان 🖥️</div>
           <div class="val" id="dAssetsCost">0</div>
-          <div class="sub">IQD (بەهای سەرمایە)</div>
+          <div class="sub">IQD (سەرمایەی ئامێر)</div>
         </div>
 
         <div class="color-card bg-teal">
-          <div class="title">کۆی خەرجییەکان (ماڵ و کار) 💳</div>
+          <div class="title">کۆی مەسرەفی کار و ماڵ 💳</div>
           <div class="val" id="dExpenseTotal">0</div>
-          <div class="sub">IQD (لە بەشی دارایی)</div>
+          <div class="sub">IQD (خەرجی کار + ماڵەوە)</div>
         </div>
 
         <div class="color-card bg-purple">
@@ -411,7 +488,7 @@
     <div id="ordersTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
         <h3>داواکارییە چالاکەکان</h3>
-        <button class="btn btn-primary btn-sm" onclick="openOrderModal()">+ داواکاری نوێ</button>
+        <button class="btn btn-primary btn-sm" onclick="openOrderModal()">+ داواکاری نوێ / داتا ئینتری</button>
       </div>
       <input type="text" id="orderSearch" class="form-control" style="margin-bottom: 0.8rem;" placeholder="گەڕان بەپێی ناو، مۆبایل، شار..." oninput="renderOrders()">
 
@@ -419,7 +496,7 @@
         <table>
           <thead>
             <tr>
-              <th>کڕیار / ناونیشان</th>
+              <th>کڕیار / بەروار</th>
               <th>کتێب و پەڕەکان</th>
               <th>وێنە</th>
               <th>نرخی کتێب</th>
@@ -432,6 +509,24 @@
           </thead>
           <tbody id="ordersTableBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- بەشی نوێ: مەسرەفی کەرەستەی کار (حیبر، وەرەقە، فریلانسەر) -->
+    <div id="workExpensesTab" class="view-panel" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+          <h3>🛠️ مەسرەف و کەرەستەکانی کار (حیبر، وەرەقە، دەستحەق...)</h3>
+          <span style="font-size: 12px; color: var(--text-muted);">لێرە بابەتەکان دیاری بکە و هەر کڕینێکی نوێ ڕاستەوخۆ لەناو بەشەکە تۆمار بکە.</span>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-primary btn-sm" onclick="openNewCategoryModal()">+ دروستکردنی بەشی نوێ (وەک: حیبر، وەرەقە)</button>
+          <button class="btn btn-success btn-sm" onclick="openAddExpenseEntryModal()">+ خەرجی نوێ لەناو بەشێک</button>
+        </div>
+      </div>
+
+      <div id="workExpenseCategoriesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <!-- کارت و خشتەی بەشەکان لێرە بە کۆد دروست دەبن -->
       </div>
     </div>
 
@@ -476,10 +571,10 @@
       </div>
     </div>
 
-    <!-- دارایی -->
+    <!-- دارایی و FIB -->
     <div id="financeTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
-        <h3>حسابات و دارایی (FIB)</h3>
+        <h3>حسابات و دارایی خێزانی (FIB)</h3>
         <button class="btn btn-primary btn-sm" onclick="openFinanceModal()">+ تۆمارکردن</button>
       </div>
       <div class="table-card">
@@ -490,6 +585,7 @@
               <th>جۆر</th>
               <th>بڕ (IQD)</th>
               <th>شێواز</th>
+              <th>بەروار</th>
               <th>کردار</th>
             </tr>
           </thead>
@@ -541,11 +637,12 @@
     </div>
   </div>
 
-  <!-- مۆداڵی داواکاری -->
+  <!-- مۆداڵی داواکاری بە فیلدی دەستکاری بەروار (بۆ داتا ئینتری مانگەکانی پێشوو) -->
   <div id="orderModal" class="modal">
     <div class="modal-box">
       <h3 id="orderModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">داواکاری</h3>
       <input type="hidden" id="editOrderId">
+      
       <div class="grid-2">
         <div>
           <label style="font-size:12px; font-weight:bold;">ناوی کڕیار:</label>
@@ -556,44 +653,46 @@
           <input type="text" id="mCustPhone" class="form-control">
         </div>
       </div>
+
       <div class="grid-2" style="margin-top:0.4rem;">
+        <div>
+          <label style="font-size:12px; font-weight:bold;">بەرواری داواکاری (بۆ داتا ئینتری ڕابردوو):</label>
+          <input type="date" id="mOrderDate" class="form-control">
+        </div>
         <div>
           <label style="font-size:12px; font-weight:bold;">شار و ناونیشان:</label>
           <input type="text" id="mCustAddress" class="form-control">
         </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:0.4rem;">
         <div>
           <label style="font-size:12px; font-weight:bold;">ناوی منداڵ و تەمەن:</label>
           <input type="text" id="mChildInfo" class="form-control">
         </div>
-      </div>
-
-      <!-- خانەی پارەی گەیاندن و خێری گەیاندن دوای ناونیشان -->
-      <div class="grid-2" style="margin-top:0.4rem; background: #eef2ff; padding: 0.6rem; border-radius: 8px; border: 1px dashed var(--c-purple);">
-        <div>
-          <label style="font-size:12px; font-weight:bold; color: var(--c-purple);">پارەی گەیاندن (IQD):</label>
-          <input type="text" id="mDeliveryFee" class="form-control" placeholder="نموونە: ٥٠٠٠ یان 5000">
-        </div>
-        <div>
-          <label style="font-size:12px; font-weight:bold; color: var(--c-green);">خێری تۆ لە گەیاندن (IQD):</label>
-          <input type="text" id="mDeliveryProfit" class="form-control" placeholder="نموونە: ١٠٠٠ یان 500">
-        </div>
-      </div>
-
-      <div class="grid-2" style="margin-top:0.4rem;">
         <div>
           <label style="font-size:12px; font-weight:bold;">جۆری کتێب:</label>
           <select id="mBookTypeSelect" class="form-control"></select>
         </div>
+      </div>
+
+      <!-- گەیاندن و خێری گەیاندن -->
+      <div class="grid-2" style="margin-top:0.4rem; background: #eef2ff; padding: 0.6rem; border-radius: 8px; border: 1px dashed var(--c-purple);">
+        <div>
+          <label style="font-size:12px; font-weight:bold; color: var(--c-purple);">پارەی گەیاندن (IQD):</label>
+          <input type="text" id="mDeliveryFee" class="form-control" placeholder="نموونە: ٥٠٠٠">
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold; color: var(--c-green);">خێری تۆ لە گەیاندن (IQD):</label>
+          <input type="text" id="mDeliveryProfit" class="form-control" placeholder="نموونە: ١٠٠٠">
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:0.4rem;">
         <div>
           <label style="font-size:12px; font-weight:bold;">نرخی کتێب (IQD):</label>
           <input type="text" id="mOrderPrice" class="form-control" placeholder="نموونە: ٣٥٠٠٠">
         </div>
-      </div>
-      <div style="margin-top:0.6rem;">
-        <label style="font-size:12px; font-weight:bold;">پەڕەکان (سەحی لێبدە):</label>
-        <div class="pages-checklist-grid" id="modalPagesChecklist"></div>
-      </div>
-      <div class="grid-2" style="margin-top:0.4rem;">
         <div>
           <label style="font-size:12px; font-weight:bold;">دۆخی پارە:</label>
           <select id="mPaymentStatus" class="form-control">
@@ -601,16 +700,24 @@
             <option value="paid">وەرگیراوە</option>
           </select>
         </div>
-        <div>
-          <label style="font-size:12px; font-weight:bold;">ئەپلۆدی وێنە:</label>
-          <input type="file" id="mOrderImages" class="form-control" multiple accept="image/*" onchange="handleImageUpload(event)">
-        </div>
+      </div>
+
+      <div style="margin-top:0.6rem;">
+        <label style="font-size:12px; font-weight:bold;">پەڕەکان (سەحی لێبدە):</label>
+        <div class="pages-checklist-grid" id="modalPagesChecklist"></div>
+      </div>
+
+      <div style="margin-top:0.4rem;">
+        <label style="font-size:12px; font-weight:bold;">ئەپلۆدی وێنە:</label>
+        <input type="file" id="mOrderImages" class="form-control" multiple accept="image/*" onchange="handleImageUpload(event)">
       </div>
       <div id="imagePreviewContainer" style="display:flex; gap:4px; flex-wrap:wrap; margin:0.4rem 0;"></div>
+
       <div style="margin-top:0.4rem;">
         <label style="font-size:12px; font-weight:bold;">تێبینی:</label>
         <textarea id="mOrderNotes" class="form-control" rows="2"></textarea>
       </div>
+
       <div style="display:flex; justify-content:flex-end; gap:0.4rem; margin-top:0.8rem;">
         <button class="btn btn-secondary btn-sm" onclick="closeOrderModal()">داخستن</button>
         <button class="btn btn-primary btn-sm" id="btnSaveOrder" onclick="saveOrder()">پاشەکەوتکردن</button>
@@ -618,7 +725,51 @@
     </div>
   </div>
 
-  <!-- مۆداڵی خشتەی وردەکاریی گەیاندنەکان -->
+  <!-- مۆداڵی دروستکردنی بەشی کەرەستە (حیبر، وەرەقە...) -->
+  <div id="newCategoryModal" class="modal">
+    <div class="modal-box" style="max-width:380px;">
+      <h3 style="margin-bottom:0.8rem; color:var(--c-purple);">زیادکردنی بەش / کەرەستە</h3>
+      <div style="margin-bottom:0.8rem;">
+        <label style="font-size:12px; font-weight:bold;">ناوی بەشەکە:</label>
+        <input type="text" id="catNameInput" class="form-control" placeholder="وەک: حیبر، وەرەقەی فۆتۆ، فریلانسەر">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.4rem;">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('newCategoryModal').style.display='none'">داخستن</button>
+        <button class="btn btn-primary btn-sm" onclick="saveNewCategory()">دروستکردن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مۆداڵی خەرجکردن لەناو بەشێک -->
+  <div id="addExpenseEntryModal" class="modal">
+    <div class="modal-box" style="max-width:400px;">
+      <h3 style="margin-bottom:0.8rem; color:var(--c-purple);">تۆمارکردنی کڕین لە بەشێکدا</h3>
+      <div style="margin-bottom:0.6rem;">
+        <label style="font-size:12px; font-weight:bold;">بەشەکە هەڵبژێرە:</label>
+        <select id="expCatSelect" class="form-control"></select>
+      </div>
+      <div style="margin-bottom:0.6rem;">
+        <label style="font-size:12px; font-weight:bold;">وەسف و تێبینی کڕین:</label>
+        <input type="text" id="expDescInput" class="form-control" placeholder="وەک: کڕینی ۲ پاکەت حیبر، پارەی کاک ئارام">
+      </div>
+      <div class="grid-2">
+        <div>
+          <label style="font-size:12px; font-weight:bold;">بڕی پارە (IQD):</label>
+          <input type="text" id="expAmountInput" class="form-control" placeholder="نموونە: ٢٥٠٠٠">
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:bold;">بەروار:</label>
+          <input type="date" id="expDateInput" class="form-control">
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.4rem; margin-top:0.8rem;">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('addExpenseEntryModal').style.display='none'">داخستن</button>
+        <button class="btn btn-primary btn-sm" onclick="saveWorkExpenseEntry()">پاشەکەوتکردن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مۆداڵی خشتەی گەیاندنەکان -->
   <div id="deliveryModal" class="modal">
     <div class="modal-box" style="max-width:680px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
@@ -646,7 +797,7 @@
     </div>
   </div>
 
-  <!-- مۆداڵی دارایی -->
+  <!-- مۆداڵی دارایی خێزانی -->
   <div id="financeModal" class="modal">
     <div class="modal-box" style="max-width:400px;">
       <h3 id="financeModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">تۆماری دارایی</h3>
@@ -665,7 +816,7 @@
         </div>
         <div>
           <label style="font-size:12px; font-weight:bold;">بڕ (IQD):</label>
-          <input type="text" id="finAmount" class="form-control" placeholder="نموونە: ٢٥٠٠٠">
+          <input type="text" id="finAmount" class="form-control">
         </div>
       </div>
       <div style="margin-top:0.6rem;">
@@ -694,7 +845,7 @@
       <div class="grid-2">
         <div>
           <label style="font-size:12px; font-weight:bold;">نرخ (IQD):</label>
-          <input type="text" id="assetPrice" class="form-control" placeholder="نموونە: ١٥٠٠٠٠">
+          <input type="text" id="assetPrice" class="form-control">
         </div>
         <div>
           <label style="font-size:12px; font-weight:bold;">دۆخ:</label>
@@ -709,7 +860,6 @@
   </div>
 
   <script>
-    // فەنکشنی زیرەک بۆ گۆڕینی ژمارەی کوردی و عەرەبی
     function parseKurdishNumber(str) {
       if (!str) return 0;
       const digits = [/٠|۰/g, /١|۱/g, /٢|۲/g, /٣|۳/g, /٤|۴/g, /٥|۵/g, /٦|۶/g, /٧|۷/g, /٨|۸/g, /٩|۹/g];
@@ -740,6 +890,8 @@
     let finances = [];
     let assets = [];
     let trash = [];
+    let workCategories = ["حیبر", "وەرەقە و لامینەیت", "فریلانسەر و دەستحەق", "کەلوپەلی تر"];
+    let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
     let pageTypes = ["ستاندارت (فێرکاری گشتی)", "پەڕەی ژمارە و ئەندازە", "پەڕەی ئاژەڵان و ڕەنگەکان", "پەڕەی ناوی تایبەتی منداڵ", "پەڕەی جیاکردنەوەی شێوەکان", "پەڕەی تەقەڵی دەستی", "پەڕەی ژماردنی میوەکان", "پەڕەی کەشوهەوا"];
     let currentImages = [];
@@ -752,6 +904,8 @@
           finances = JSON.parse(localStorage.getItem('th_finances') || '[]');
           assets = JSON.parse(localStorage.getItem('th_assets') || '[]');
           trash = JSON.parse(localStorage.getItem('th_trash') || '[]');
+          workCategories = JSON.parse(localStorage.getItem('th_work_categories') || JSON.stringify(workCategories));
+          workExpenses = JSON.parse(localStorage.getItem('th_work_expenses') || '[]');
           bookTypes = JSON.parse(localStorage.getItem('th_book_types') || JSON.stringify(bookTypes));
           pageTypes = JSON.parse(localStorage.getItem('th_page_types') || JSON.stringify(pageTypes));
           refreshAllUI();
@@ -765,6 +919,8 @@
           finances = val.finances || [];
           assets = val.assets || [];
           trash = val.trash || [];
+          workCategories = val.workCategories || workCategories;
+          workExpenses = val.workExpenses || [];
           bookTypes = val.bookTypes || bookTypes;
           pageTypes = val.pageTypes || pageTypes;
 
@@ -772,6 +928,8 @@
           localStorage.setItem('th_finances', JSON.stringify(finances));
           localStorage.setItem('th_assets', JSON.stringify(assets));
           localStorage.setItem('th_trash', JSON.stringify(trash));
+          localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
+          localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
           localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
           localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
           
@@ -785,12 +943,14 @@
       localStorage.setItem('th_finances', JSON.stringify(finances));
       localStorage.setItem('th_assets', JSON.stringify(assets));
       localStorage.setItem('th_trash', JSON.stringify(trash));
+      localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
+      localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
       localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
       localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
       refreshAllUI();
 
       db.ref('tinyhands_data').set({
-        orders, finances, assets, trash, bookTypes, pageTypes
+        orders, finances, assets, trash, workCategories, workExpenses, bookTypes, pageTypes
       });
     }
 
@@ -800,6 +960,7 @@
       renderSettings();
       renderFinances();
       renderAssets();
+      renderWorkExpenses();
       renderTrash();
       calculateStats();
     }
@@ -830,6 +991,90 @@
       event.currentTarget.classList.add('active');
     }
 
+    // بەڕێوەبردنی کەرەستە و مەسرەفی کار (حیبر، وەرەقە...)
+    function openNewCategoryModal() {
+      document.getElementById('catNameInput').value = '';
+      document.getElementById('newCategoryModal').style.display = 'flex';
+    }
+
+    function saveNewCategory() {
+      const name = document.getElementById('catNameInput').value.trim();
+      if (!name) return;
+      if (!workCategories.includes(name)) {
+        workCategories.push(name);
+        syncToCloud();
+      }
+      document.getElementById('newCategoryModal').style.display = 'none';
+    }
+
+    function openAddExpenseEntryModal(presetCat = null) {
+      const sel = document.getElementById('expCatSelect');
+      sel.innerHTML = workCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+      if (presetCat) sel.value = presetCat;
+      document.getElementById('expDescInput').value = '';
+      document.getElementById('expAmountInput').value = '';
+      document.getElementById('expDateInput').value = new Date().toISOString().split('T')[0];
+      document.getElementById('addExpenseEntryModal').style.display = 'flex';
+    }
+
+    function saveWorkExpenseEntry() {
+      const category = document.getElementById('expCatSelect').value;
+      const desc = document.getElementById('expDescInput').value.trim();
+      const amount = parseKurdishNumber(document.getElementById('expAmountInput').value);
+      const date = document.getElementById('expDateInput').value || new Date().toISOString().split('T')[0];
+      if (!amount) return alert('تکایە بڕی پارەکە بنووسە');
+
+      workExpenses.unshift({
+        id: Date.now(),
+        category,
+        desc: desc || category,
+        amount,
+        date,
+        user: currentUser
+      });
+      document.getElementById('addExpenseEntryModal').style.display = 'none';
+      syncToCloud();
+    }
+
+    function deleteWorkExpenseItem(id) {
+      const idx = workExpenses.findIndex(x => x.id === id);
+      if (idx !== -1) {
+        workExpenses.splice(idx, 1);
+        syncToCloud();
+      }
+    }
+
+    function renderWorkExpenses() {
+      const container = document.getElementById('workExpenseCategoriesGrid');
+      container.innerHTML = workCategories.map(cat => {
+        const items = workExpenses.filter(e => e.category === cat);
+        const total = items.reduce((sum, e) => sum + e.amount, 0);
+
+        return `
+        <div style="background:#fff; border-radius:14px; border:1px solid var(--border); padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+              <strong style="color:var(--c-purple); font-size:15px;">📦 ${cat}</strong>
+              <button class="btn btn-sm btn-success" onclick="openAddExpenseEntryModal('${cat}')">+ کڕینی نوێ</button>
+            </div>
+            <div style="font-size:13px; font-weight:bold; color:var(--c-red); margin-bottom:0.6rem;">کۆی خەرجی: ${total.toLocaleString()} IQD</div>
+            
+            <div style="max-height:140px; overflow-y:auto; border-top:1px solid var(--border); padding-top:4px;">
+              ${items.map(item => `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; padding:3px 0; border-bottom:1px dashed #f1f5f9;">
+                  <span>${item.desc} <small style="color:var(--text-muted);">(${item.date})</small></span>
+                  <div style="display:flex; gap:4px; align-items:center;">
+                    <strong style="color:var(--c-red);">${item.amount.toLocaleString()}</strong>
+                    <span style="color:red; cursor:pointer;" onclick="deleteWorkExpenseItem(${item.id})">×</span>
+                  </div>
+                </div>
+              `).join('') || '<div style="font-size:11px; color:#94a3b8;">هیچ کڕینێک نییە</div>'}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
     // تەنەکەی خۆڵ
     function moveToTrash(type, item, title) {
       trash.unshift({
@@ -848,8 +1093,6 @@
       if (t.type === 'داواکاری') orders.unshift(t.originalItem);
       if (t.type === 'دارایی') finances.unshift(t.originalItem);
       if (t.type === 'ئامێر') assets.unshift(t.originalItem);
-      if (t.type === 'جۆری کتێب') bookTypes.push(t.originalItem);
-      if (t.type === 'نەوعیەتی پەڕە') pageTypes.push(t.originalItem);
       trash.splice(idx, 1);
       syncToCloud();
     }
@@ -917,6 +1160,7 @@
         document.getElementById('orderModalTitle').innerText = 'دەستکاری داواکاری';
         document.getElementById('mCustName').value = o.name;
         document.getElementById('mCustPhone').value = o.phone;
+        document.getElementById('mOrderDate').value = o.orderDate || '';
         document.getElementById('mCustAddress').value = o.address;
         document.getElementById('mChildInfo').value = o.childInfo;
         document.getElementById('mDeliveryFee').value = o.deliveryFee || 0;
@@ -934,9 +1178,10 @@
           </label>
         `).join('');
       } else {
-        document.getElementById('orderModalTitle').innerText = 'داواکاری نوێ';
+        document.getElementById('orderModalTitle').innerText = 'داواکاری نوێ / داتا ئینتری';
         document.getElementById('mCustName').value = '';
         document.getElementById('mCustPhone').value = '';
+        document.getElementById('mOrderDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('mCustAddress').value = '';
         document.getElementById('mChildInfo').value = '';
         document.getElementById('mDeliveryFee').value = '';
@@ -963,6 +1208,7 @@
       const id = document.getElementById('editOrderId').value;
       const name = document.getElementById('mCustName').value.trim();
       const phone = document.getElementById('mCustPhone').value.trim();
+      const orderDate = document.getElementById('mOrderDate').value || new Date().toISOString().split('T')[0];
       const address = document.getElementById('mCustAddress').value.trim();
       const childInfo = document.getElementById('mChildInfo').value.trim();
       
@@ -981,7 +1227,9 @@
 
       if(id) {
         const o = orders.find(x => x.id == id);
-        o.name = name; o.phone = phone; o.address = address;
+        o.name = name; o.phone = phone; 
+        o.orderDate = orderDate;
+        o.address = address;
         o.childInfo = childInfo; 
         o.price = price; 
         o.deliveryFee = deliveryFee;
@@ -991,7 +1239,7 @@
         o.images = currentImages;
       } else {
         orders.unshift({
-          id: Date.now(), name, phone, address, childInfo, 
+          id: Date.now(), name, phone, orderDate, address, childInfo, 
           price, deliveryFee, deliveryProfit,
           payment, notes, bookType,
           selectedPages, images: currentImages, completed: false,
@@ -1036,7 +1284,11 @@
 
         return `
         <tr>
-          <td><strong>${o.name}</strong><br><small>${o.phone} | ${o.address}</small></td>
+          <td>
+            <strong>${o.name}</strong><br>
+            <small style="color:var(--c-purple); font-weight:bold;">📅 ${o.orderDate || 'دیارینەکراو'}</small><br>
+            <small>${o.phone} | ${o.address}</small>
+          </td>
           <td><strong>${o.bookType}</strong><br><small style="color:var(--text-muted);">${(o.selectedPages||[]).join(', ')}</small></td>
           <td>${(o.images||[]).length ? `<img src="${o.images[0]}" style="width:30px; height:30px; border-radius:4px; object-fit:cover;">` : 'بێ وێنە'}</td>
           <td><strong>${(o.price || 0).toLocaleString()}</strong></td>
@@ -1085,7 +1337,6 @@
       }).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ داواکارییەک نییە</td></tr>';
     }
 
-    // خشتەی وردەکاریی گەیاندن
     function openDeliveryModal() {
       let sumFee = 0;
       let sumProf = 0;
@@ -1111,9 +1362,7 @@
       document.getElementById('deliveryModal').style.display = 'flex';
     }
 
-    function closeDeliveryModal() {
-      document.getElementById('deliveryModal').style.display = 'none';
-    }
+    function closeDeliveryModal() { document.getElementById('deliveryModal').style.display = 'none'; }
 
     // جۆرەکان
     function addBookType() {
@@ -1195,7 +1444,7 @@
         const f = finances.find(x => x.id == id);
         f.title = title; f.type = type; f.amount = amount; f.method = method;
       } else {
-        finances.unshift({ id: Date.now(), title, type, amount, method });
+        finances.unshift({ id: Date.now(), title, type, amount, method, date: new Date().toISOString().split('T')[0] });
       }
       closeFinanceModal();
       syncToCloud();
@@ -1215,6 +1464,7 @@
           <td>${f.type==='expense'?'خەرجی':'قەرز'}</td>
           <td>${f.amount.toLocaleString()}</td>
           <td>${f.method}</td>
+          <td>${f.date || '---'}</td>
           <td>
             <div style="display:flex; gap:4px;">
               <button class="btn btn-sm btn-secondary" onclick="openFinanceModal(${f.id})">دەستکاری</button>
@@ -1222,7 +1472,7 @@
             </div>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ تۆمارێک نییە</td></tr>';
+      `).join('') || '<tr><td colspan="6" style="text-align:center;">هیچ تۆمارێک نییە</td></tr>';
     }
 
     function openAssetModal(id = null) {
@@ -1282,29 +1532,57 @@
       `).join('') || '<tr><td colspan="4" style="text-align:center;">هیچ ئامێرێک نییە</td></tr>';
     }
 
-    // ئامارەکان (داشبۆرد)
+    // ئامارەکان و داتا ئینسایت بەپێی کات
     function calculateStats() {
-      const totalSales = orders.reduce((s, o) => s + (o.price || 0), 0);
-      const deliveryOrders = orders.filter(o => (o.deliveryFee || 0) > 0);
-      const totalDeliveryFee = orders.reduce((s, o) => s + (o.deliveryFee || 0), 0);
-      const totalDeliveryProfit = orders.reduce((s, o) => s + (o.deliveryProfit || 0), 0);
+      const filterMode = document.getElementById('insightFilter').value;
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1; // 1-12
 
-      // پارەی نەگەیشتوو لە کڕیار (کتێب + تەواوی گەیاندن)
-      const pending = orders.filter(o => o.payment === 'unpaid').reduce((s, o) => s + (o.price || 0) + (o.deliveryFee || 0), 0);
+      // فلتەرکردنی داواکارییەکان بەپێی کات
+      let filteredOrders = orders;
+      if (filterMode === 'this_month') {
+        filteredOrders = orders.filter(o => {
+          if (!o.orderDate) return false;
+          const [y, m] = o.orderDate.split('-').map(Number);
+          return y === currentYear && m === currentMonth;
+        });
+      } else if (filterMode === 'last_month') {
+        const lastM = currentMonth === 1 ? 12 : currentMonth - 1;
+        const lastMY = currentMonth === 1 ? currentYear - 1 : currentYear;
+        filteredOrders = orders.filter(o => {
+          if (!o.orderDate) return false;
+          const [y, m] = o.orderDate.split('-').map(Number);
+          return y === lastMY && m === lastM;
+        });
+      } else if (filterMode === 'this_year') {
+        filteredOrders = orders.filter(o => {
+          if (!o.orderDate) return false;
+          const [y] = o.orderDate.split('-').map(Number);
+          return y === currentYear;
+        });
+      }
+
+      const totalSales = filteredOrders.reduce((s, o) => s + (o.price || 0), 0);
+      const deliveryOrders = filteredOrders.filter(o => (o.deliveryFee || 0) > 0);
+      const totalDeliveryFee = filteredOrders.reduce((s, o) => s + (o.deliveryFee || 0), 0);
+      const totalDeliveryProfit = filteredOrders.reduce((s, o) => s + (o.deliveryProfit || 0), 0);
+
+      const pending = filteredOrders.filter(o => o.payment === 'unpaid').reduce((s, o) => s + (o.price || 0) + (o.deliveryFee || 0), 0);
       
-      // خەرجی و قەرزەکانی ناو بەشی دارایی
-      const exp = finances.filter(f => f.type === 'expense').reduce((s, f) => s + (f.amount || 0), 0);
+      const homeExp = finances.filter(f => f.type === 'expense').reduce((s, f) => s + (f.amount || 0), 0);
+      const workExpTotal = workExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+      const allExpenses = homeExp + workExpTotal;
+
       const debt = finances.filter(f => f.type === 'debt').reduce((s, f) => s + (f.amount || 0), 0);
       const assetsVal = assets.reduce((s, a) => s + (a.price || 0), 0);
 
-      // قازانجی گشتی: فرۆشتنی کتێب + خێری گەیاندن - خەرجییەکان
-      const netProfit = (totalSales + totalDeliveryProfit) - exp;
-      const avgOrder = orders.length > 0 ? Math.round(totalSales / orders.length) : 0;
+      const netProfit = (totalSales + totalDeliveryProfit) - allExpenses;
+      const avgOrder = filteredOrders.length > 0 ? Math.round(totalSales / filteredOrders.length) : 0;
 
-      // پڕکردنەوەی کارتەکانی داشبۆرد
-      document.getElementById('dTotalOrders').innerText = orders.length;
-      document.getElementById('dActiveOrders').innerText = orders.filter(o => !o.completed).length;
-      document.getElementById('dCompletedOrders').innerText = orders.filter(o => o.completed).length;
+      document.getElementById('dTotalOrders').innerText = filteredOrders.length;
+      document.getElementById('dActiveOrders').innerText = filteredOrders.filter(o => !o.completed).length;
+      document.getElementById('dCompletedOrders').innerText = filteredOrders.filter(o => o.completed).length;
       document.getElementById('dTotalSales').innerText = totalSales.toLocaleString() + ' IQD';
       
       document.getElementById('dDeliveryTotal').innerText = totalDeliveryFee.toLocaleString() + ' IQD';
@@ -1314,11 +1592,34 @@
       document.getElementById('dPendingPay').innerText = pending.toLocaleString() + ' IQD';
       document.getElementById('dNetProfit').innerText = netProfit.toLocaleString() + ' IQD';
       
-      // کارتە گەڕاوەکان: قەرز و ئامێر و خەرجی
       document.getElementById('dDebtTotal').innerText = debt.toLocaleString() + ' IQD';
       document.getElementById('dAssetsCost').innerText = assetsVal.toLocaleString() + ' IQD';
-      document.getElementById('dExpenseTotal').innerText = exp.toLocaleString() + ' IQD';
+      document.getElementById('dExpenseTotal').innerText = allExpenses.toLocaleString() + ' IQD';
       document.getElementById('dAvgOrder').innerText = avgOrder.toLocaleString() + ' IQD';
+
+      // داتای مانگانە بۆ لاکێشەی ئینسایت (۱۲ مانگ)
+      const monthsName = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+      const monthlyTotals = new Array(12).fill(0);
+      orders.forEach(o => {
+        if (o.orderDate) {
+          const [y, m] = o.orderDate.split('-').map(Number);
+          if (y === currentYear && m >= 1 && m <= 12) {
+            monthlyTotals[m - 1] += (o.price || 0);
+          }
+        }
+      });
+
+      const maxMonthVal = Math.max(...monthlyTotals, 1);
+      const chartContainer = document.getElementById('monthlyChartBars');
+      chartContainer.innerHTML = monthlyTotals.map((val, idx) => {
+        const heightPct = Math.max((val / maxMonthVal) * 120, 4);
+        return `
+        <div class="bar-col">
+          <span style="font-size:9.5px; color:var(--text-muted); font-weight:bold;">${val > 0 ? (val/1000).toFixed(0)+'k' : ''}</span>
+          <div class="bar-stick" style="height:${heightPct}px; background:${idx+1 === currentMonth ? 'var(--c-purple)' : 'var(--c-blue)'};"></div>
+          <span class="bar-label">مانگی ${monthsName[idx]}</span>
+        </div>`;
+      }).join('');
     }
 
     window.onload = () => {
