@@ -64,7 +64,6 @@
       z-index: 100;
     }
 
-    /* شریتی سەرەوە بە ئایکۆن و دەرکەوتنی دەق بە ماوس (Hover Expand) */
     .top-nav {
       display: flex;
       gap: 0.35rem;
@@ -125,7 +124,6 @@
       white-space: nowrap;
     }
 
-    /* ئایکۆنی نۆتیفیکەیشن و نۆتەکان */
     .header-actions {
       display: flex;
       align-items: center;
@@ -260,7 +258,6 @@
       .colorful-grid { grid-template-columns: 1fr; }
     }
 
-    /* کارتی Drag & Drop */
     .color-card {
       border-radius: 16px;
       padding: 1.2rem 1rem;
@@ -343,6 +340,45 @@
       border-radius: 8px;
       font-size: 14px;
       outline: none;
+    }
+
+    /* پانێڵی سێرچی پێشکەوتوو */
+    .adv-search-panel {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .search-tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .search-tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 3px 8px;
+      border-radius: 14px;
+      font-size: 11.5px;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid var(--border);
+    }
+    .search-tag-chip input {
+      cursor: pointer;
+    }
+    .search-tag-chip.active {
+      background: #ede9fe;
+      border-color: var(--c-purple);
+      color: var(--c-purple);
+      font-weight: bold;
     }
 
     .pages-checklist-grid {
@@ -474,7 +510,6 @@
       opacity: 1;
     }
 
-    /* نۆت و تودو ستایل */
     .todo-item {
       display: flex;
       align-items: center;
@@ -496,13 +531,13 @@
 </head>
 <body>
 
-  <!-- نۆتیفیکەیشنی خێرا -->
+  <!-- نۆتیفیکەیشن -->
   <div id="toastNotification">
     <span id="toastIcon">🔔</span>
     <span id="toastMsg">کردارەکە سەرکەوتوو بوو</span>
   </div>
 
-  <!-- مۆداڵی لۆگین بەبێ ڕەمزی کاڵکراوە -->
+  <!-- مۆداڵی لۆگین -->
   <div id="loginOverlay">
     <div class="login-box">
       <h2 style="color: var(--c-purple); margin-bottom: 0.4rem;">تینی هاندس ✋</h2>
@@ -538,7 +573,7 @@
     </div>
     
     <div class="header-actions">
-      <!-- بەشی نۆت / تودوولیستی هاوبەش (هەتا هەفتەیەک) -->
+      <!-- نۆتی هاوبەش -->
       <div class="icon-btn-wrapper" onclick="toggleNotesDropdown(event)">
         <div class="circle-icon-btn" title="نۆت و تودوولیستی هاوبەش">📝</div>
         <div class="badge-count" id="notesBadge" style="background:var(--c-purple);">0</div>
@@ -554,12 +589,12 @@
         </div>
       </div>
 
-      <!-- ئایکۆنی نۆتیفیکەیشن و زەنگ -->
+      <!-- نۆتیفیکەیشن -->
       <div class="icon-btn-wrapper" onclick="toggleNotifDropdown(event)">
         <div class="circle-icon-btn" title="ئاگادارییەکان">🔔</div>
         <div class="badge-count" id="notifBadge">0</div>
         <div class="pop-dropdown" id="notifDropdown">
-          <strong style="font-size:12px; color:var(--c-purple);">ئاگادارییەکان (ئەوانەی ٢٤ سەعاتیان بەسەردا چووە سوور نین):</strong>
+          <strong style="font-size:12px; color:var(--c-purple);">ئاگادارییەکان:</strong>
           <div id="notifList" style="margin-top:6px; font-size:11.5px; display:flex; flex-direction:column; gap:4px;"></div>
         </div>
       </div>
@@ -573,24 +608,22 @@
     <!-- داشبۆرد و داتا ئەنەلایز -->
     <div id="dashboardTab" class="view-panel">
       
-      <!-- شیکاری و داتا ئەنەلایزی پڕفرۆشترین بەرهەم و پەڕەکان -->
+      <!-- پانێڵی شیکاری و داتا ئەنەلایز -->
       <div class="chart-container" style="background: linear-gradient(to left, #ffffff, #f8fafc); border-right: 4px solid var(--c-purple);">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.8rem;">
           <div>
-            <strong style="font-size:14px; color:var(--c-purple);">🔍 داتا ئەنەلایز (شیکاری وردی فرۆشترین کتێب و پەڕەکان)</strong>
-            <div style="font-size:11.5px; color:var(--text-muted);">بزانە کام بەرهەم و کام پەڕە زۆرترین داواکاری و سەحی لەسەر بووە</div>
+            <strong style="font-size:14px; color:var(--c-purple);">🔍 داتا ئەنەلایز و شیکاری پڕفرۆشترینەکان</strong>
+            <div style="font-size:11.5px; color:var(--text-muted);">شیکاری ئۆتۆماتیکی پڕفرۆشترین کتێب، پەڕە، و پشکنینی فرۆش</div>
           </div>
-          <input type="text" id="analyticsSearchInput" class="form-control" style="width:230px; font-size:12px; padding:0.4rem 0.6rem;" placeholder="گەڕان لەناو شیکاری بەرهەمەکان..." oninput="calculateStats()">
+          <input type="text" id="analyticsSearchInput" class="form-control" style="width:240px; font-size:12px; padding:0.4rem 0.6rem;" placeholder="🔍 سێرچی خێرا لە شیکارییەکان..." oninput="calculateStats()">
         </div>
 
         <div class="grid-2">
-          <!-- پڕفرۆشترین جۆری کتێبەکان -->
           <div style="background:#fff; padding:0.8rem; border-radius:10px; border:1px solid var(--border);">
-            <strong style="font-size:12px; color:var(--c-purple);">🏆 پڕفرۆشترین جۆری کتێبەکان لەم مانگەدا:</strong>
+            <strong style="font-size:12px; color:var(--c-purple);">🏆 پڕفرۆشترین جۆری کتێبەکان لەم ماوەیەدا:</strong>
             <div id="topBooksAnalyticsList" style="margin-top:6px; display:flex; flex-direction:column; gap:4px; max-height:120px; overflow-y:auto;"></div>
           </div>
 
-          <!-- پڕداواکراوترین پەڕەکان (سەحلێدراوەکان) -->
           <div style="background:#fff; padding:0.8rem; border-radius:10px; border:1px solid var(--border);">
             <strong style="font-size:12px; color:var(--c-green);">⭐ ئەو پەڕانەی لە هەمووی زیاتر سەحیان لێدراوە:</strong>
             <div id="topPagesAnalyticsList" style="margin-top:6px; display:flex; flex-direction:column; gap:4px; max-height:120px; overflow-y:auto;"></div>
@@ -624,13 +657,32 @@
       <div class="colorful-grid" id="mainCardsGrid"></div>
     </div>
 
-    <!-- داواکارییەکان -->
+    <!-- داواکارییەکان لەگەڵ مەکینەی سێرچی پێشکەوتوو -->
     <div id="ordersTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
         <h3>داواکارییە چالاکەکان</h3>
         <button class="btn btn-primary btn-sm" onclick="openOrderModal()">+ داواکاری نوێ / داتا ئینتری</button>
       </div>
-      <input type="text" id="orderSearch" class="form-control" style="margin-bottom: 0.8rem;" placeholder="گەڕان بەپێی ناو، مۆبایل، شار..." oninput="renderOrders()">
+
+      <!-- پانێڵی سێرچی پێشکەوتوو بە سەح و فلتەر -->
+      <div class="adv-search-panel">
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <input type="text" id="orderSearch" class="form-control" placeholder="🔍 سێرچی پێشکەوتوو بکە (بە نرخ، ناو، تەلەفۆن، ناونیشان، کتێب، بەروار)..." oninput="renderOrders()">
+          <button class="btn btn-secondary btn-sm" onclick="resetSearchFilters()">پاککردنەوە</button>
+        </div>
+        
+        <!-- بژاردەکانی فلتەر بە سەح (Checkboxes) -->
+        <div class="search-tags-row">
+          <span style="font-size:11.5px; font-weight:bold; color:var(--c-purple);">سێرچ لە کوێدا بکرێت:</span>
+          <label class="search-tag-chip active"><input type="checkbox" id="sf_name" checked onchange="renderOrders()"> ناوی کڕیار</label>
+          <label class="search-tag-chip active"><input type="checkbox" id="sf_price" checked onchange="renderOrders()"> نرخی کتێب</label>
+          <label class="search-tag-chip active"><input type="checkbox" id="sf_phone" checked onchange="renderOrders()"> تەلەفۆن</label>
+          <label class="search-tag-chip active"><input type="checkbox" id="sf_book" checked onchange="renderOrders()"> جۆری کتێب</label>
+          <label class="search-tag-chip active"><input type="checkbox" id="sf_address" checked onchange="renderOrders()"> شار / ناونیشان</label>
+          <label class="search-tag-chip active"><input type="checkbox" id="sf_delFee" checked onchange="renderOrders()"> پارەی گەیاندن</label>
+          <label class="search-tag-chip active"><input type="checkbox" id="sf_date" checked onchange="renderOrders()"> بەروار</label>
+        </div>
+      </div>
 
       <div class="table-card">
         <table>
@@ -654,7 +706,7 @@
 
     <!-- مەسرەفی کار (حیبر، وەرەقە...) -->
     <div id="workExpensesTab" class="view-panel" style="display: none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:gap; gap:0.5rem;">
         <div>
           <h3>🛠️ مەسرەفی بەردەوامی کار (حیبر، وەرەقە، دەستحەق...)</h3>
           <span style="font-size: 12px; color: var(--text-muted);">هەر جۆرە مەسروفێک کە بۆ پڕۆژەکە دەیکەیت بە جیا تۆماری بکە.</span>
@@ -760,7 +812,7 @@
       </div>
     </div>
 
-    <!-- لۆگ و مێژوو بە لینکی ڕاستەوخۆ -->
+    <!-- لۆگ و مێژوو -->
     <div id="logsTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
         <h3>📜 تۆماری جووڵە و مێژوو (Activity Logs) - کلیک لە هەر دێڕێک بکە دەتباتە سەر شوێنەکە</h3>
@@ -805,7 +857,7 @@
     </div>
   </div>
 
-  <!-- مۆداڵی داواکاری (بە بژاردەی کەستم بۆ جۆری کتێب) -->
+  <!-- مۆداڵی داواکاری -->
   <div id="orderModal" class="modal">
     <div class="modal-box">
       <h3 id="orderModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">داواکاری</h3>
@@ -838,7 +890,6 @@
         <div>
           <label style="font-size:12px; font-weight:bold;">جۆری کتێب:</label>
           <select id="mBookTypeSelect" class="form-control" onchange="toggleCustomBookType(this.value)"></select>
-          <!-- خانەی نووسینی جۆری تر (کەستم) -->
           <input type="text" id="mCustomBookInput" class="form-control" placeholder="ناوی جۆری کتێبەکە بنووسە..." style="display:none; margin-top:4px; border-color:var(--c-purple);">
         </div>
       </div>
@@ -1021,14 +1072,19 @@
   </div>
 
   <script>
-    function parseKurdishNumber(str) {
-      if (!str) return 0;
+    // پاککردنەوە و گۆڕینی ژمارەی کوردی و عەرەبی
+    function cleanNumStr(str) {
+      if (!str) return '';
       const digits = [/٠|۰/g, /١|۱/g, /٢|۲/g, /٣|۳/g, /٤|۴/g, /٥|۵/g, /٦|۶/g, /٧|۷/g, /٨|۸/g, /٩|۹/g];
       let clean = String(str).trim();
       for (let i = 0; i < 10; i++) {
         clean = clean.replace(digits[i], i);
       }
-      clean = clean.replace(/,/g, '').replace(/،/g, '');
+      return clean.replace(/,/g, '').replace(/،/g, '');
+    }
+
+    function parseKurdishNumber(str) {
+      const clean = cleanNumStr(str);
       const num = Number(clean);
       return isNaN(num) ? 0 : num;
     }
@@ -1081,7 +1137,7 @@
     let assets = [];
     let trash = [];
     let activityLogs = [];
-    let sharedNotes = []; // نۆت و تودوولیستی هاوبەش بۆ ماوەی هەفتەیەک
+    let sharedNotes = [];
     let workCategories = ["حیبر", "وەرەقە و لامینەیت", "فریلانسەر و حەقی دەست"];
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
@@ -1187,7 +1243,6 @@
       });
     }
 
-    // بەشی نۆت و تودوولیستی هاوبەش (سڕینەوەی ئۆتۆماتیکی دوای ۷ ڕۆژ)
     function addSharedNote() {
       const input = document.getElementById('newNoteInput');
       const text = input.value.trim();
@@ -1200,7 +1255,7 @@
         createdAt: Date.now()
       });
       input.value = '';
-      logAction('نۆتی هاوبەش', `نۆتی نوێ نوسرا: ${text}`);
+      logAction('نۆتی هاوبەش', `نۆتی نوێ نوسرا: ${text}`, 'dashboardTab');
       syncToCloud();
       showToast('نۆتەکە پاشەکەوت کرا', '📝');
     }
@@ -1225,7 +1280,6 @@
     function renderSharedNotes() {
       const now = Date.now();
       const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-      // سڕینەوەی ئەوانەی زیاتر لە ٧ ڕۆژە ماونەتەوە
       sharedNotes = sharedNotes.filter(n => (now - n.createdAt) <= ONE_WEEK_MS);
 
       const activeNotesCount = sharedNotes.filter(n => !n.done).length;
@@ -1243,7 +1297,6 @@
       `).join('') || '<div style="font-size:11px; color:#94a3b8; text-align:center; padding:10px 0;">هیچ نۆت و تودوویەک نییە</div>';
     }
 
-    // نۆتیفیکەیشن و کاتی ٢٤ کاتژمێر
     function updateNotifications() {
       const now = Date.now();
       const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
@@ -1251,7 +1304,6 @@
       const unpaids = orders.filter(o => o.payment === 'unpaid');
       const inProgress = orders.filter(o => !o.completed);
 
-      // ئەوانەی لە ٢٤ سەعاتی ڕابردوودا دروستکراون سوور دەمێننەوە
       const freshUnpaids = unpaids.filter(o => (now - o.id) < TWENTY_FOUR_HOURS_MS);
       document.getElementById('notifBadge').innerText = freshUnpaids.length;
 
@@ -1280,6 +1332,12 @@
         </div>`;
       }
       list.innerHTML = html;
+    }
+
+    function resetSearchFilters() {
+      document.getElementById('orderSearch').value = '';
+      document.querySelectorAll('.search-tags-row input[type="checkbox"]').forEach(cb => cb.checked = true);
+      renderOrders();
     }
 
     function refreshAllUI() {
@@ -1413,14 +1471,8 @@
       e.dataTransfer.effectAllowed = 'move';
     }
 
-    function handleListDragOver(e) {
-      e.preventDefault();
-      e.currentTarget.classList.add('drag-over');
-    }
-
-    function handleListDragLeave(e) {
-      e.currentTarget.classList.remove('drag-over');
-    }
+    function handleListDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+    function handleListDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
 
     function handleListDrop(type, targetIdx, e) {
       e.preventDefault();
@@ -1448,7 +1500,6 @@
       const bookQuery = (document.getElementById('searchBookTypeInput')?.value || '').trim().toLowerCase();
       const pageQuery = (document.getElementById('searchPageTypeInput')?.value || '').trim().toLowerCase();
 
-      // جۆرەکانی کتێب
       const bookContainer = document.getElementById('bookTypesContainer');
       bookContainer.innerHTML = bookTypes.map((b, i) => {
         if (bookQuery && !b.toLowerCase().includes(bookQuery)) return '';
@@ -1470,7 +1521,6 @@
         </div>`;
       }).join('') || '<div style="padding:10px; text-align:center; color:#94a3b8; font-size:12px;">هیچ جۆرێک نەدۆزرایەوە</div>';
 
-      // نەوعیەتی پەڕەکان
       const pageContainer = document.getElementById('pageTypesContainer');
       pageContainer.innerHTML = pageTypes.map((p, i) => {
         if (pageQuery && !p.toLowerCase().includes(pageQuery)) return '';
@@ -1493,7 +1543,6 @@
       }).join('') || '<div style="padding:10px; text-align:center; color:#94a3b8; font-size:12px;">هیچ پەڕەیەک نەدۆزرایەوە</div>';
     }
 
-    // لۆگ و مێژوو بە پەیوەستکردنی ڕاستەوخۆ بە شوێنی کارەکان
     function renderLogs() {
       const tbody = document.getElementById('logsTableBody');
       tbody.innerHTML = activityLogs.map(l => `
@@ -1515,7 +1564,6 @@
       }
     }
 
-    // تەنەکەی خۆڵ: بە سڕینەوەی دانە بە دانە
     function moveToTrash(type, item, title) {
       trash.unshift({
         trashId: Date.now(),
@@ -1585,7 +1633,6 @@
       `).join('') || '<tr><td colspan="5" style="text-align:center;">بەتاڵە</td></tr>';
     }
 
-    // مەسرەفی کار
     function openNewCategoryModal() {
       document.getElementById('catNameInput').value = '';
       document.getElementById('newCategoryModal').style.display = 'flex';
@@ -1716,7 +1763,6 @@
     function openOrderModal(id = null) {
       document.getElementById('editOrderId').value = id || '';
       
-      // پڕکردنەوەی جۆرەکان بە هەڵبژاردنی کەستم
       let optionsHtml = bookTypes.map(b => `<option value="${b}">${b}</option>`).join('');
       optionsHtml += `<option value="__custom__" style="color:var(--c-purple); font-weight:bold;">✨ جۆری تر (کەستم بنووسە)...</option>`;
       document.getElementById('mBookTypeSelect').innerHTML = optionsHtml;
@@ -1865,9 +1911,39 @@
       }
     }
 
+    // سێرچی پێشکەوتوو بە فلتەر و سەحی چێکبۆکس
     function renderOrders() {
-      const q = document.getElementById('orderSearch').value.toLowerCase();
-      const act = orders.filter(o => !o.completed && (o.name.toLowerCase().includes(q) || o.phone.includes(q) || o.address.toLowerCase().includes(q)));
+      const rawQuery = (document.getElementById('orderSearch')?.value || '').trim();
+      const q = rawQuery.toLowerCase();
+      const qNum = cleanNumStr(rawQuery);
+
+      const fName = document.getElementById('sf_name')?.checked ?? true;
+      const fPrice = document.getElementById('sf_price')?.checked ?? true;
+      const fPhone = document.getElementById('sf_phone')?.checked ?? true;
+      const fBook = document.getElementById('sf_book')?.checked ?? true;
+      const fAddress = document.getElementById('sf_address')?.checked ?? true;
+      const fDelFee = document.getElementById('sf_delFee')?.checked ?? true;
+      const fDate = document.getElementById('sf_date')?.checked ?? true;
+
+      const act = orders.filter(o => {
+        if (o.completed) return false;
+        if (!q) return true;
+
+        let match = false;
+        if (fName && o.name && o.name.toLowerCase().includes(q)) match = true;
+        if (fBook && o.bookType && o.bookType.toLowerCase().includes(q)) match = true;
+        if (fAddress && o.address && o.address.toLowerCase().includes(q)) match = true;
+        if (fDate && o.orderDate && o.orderDate.includes(q)) match = true;
+
+        // پشکنینی ژمارەکان (تەلەفۆن، نرخ، گەیاندن)
+        if (qNum) {
+          if (fPhone && o.phone && cleanNumStr(o.phone).includes(qNum)) match = true;
+          if (fPrice && String(o.price).includes(qNum)) match = true;
+          if (fDelFee && String(o.deliveryFee).includes(qNum)) match = true;
+        }
+
+        return match;
+      });
 
       document.getElementById('ordersTableBody').innerHTML = act.map(o => {
         const delFee = o.deliveryFee || 0;
@@ -1907,7 +1983,7 @@
             </div>
           </td>
         </tr>`;
-      }).join('') || '<tr><td colspan="9" style="text-align:center;">داواکاری چالاک نییە</td></tr>';
+      }).join('') || '<tr><td colspan="9" style="text-align:center;">هیچ داواکارییەک نەدۆزرایەوە</td></tr>';
     }
 
     function renderCompleted() {
@@ -2127,6 +2203,7 @@
       `).join('') || '<tr><td colspan="4" style="text-align:center;">هیچ ئامێرێک نییە</td></tr>';
     }
 
+    // حسابات لەگەڵ زیادکردنی سەدی سەدی خێری گەیاندن بۆ قازانجی گشتی
     function calculateStats() {
       const filterMode = document.getElementById('timeFilterSelect').value;
       const now = new Date();
@@ -2176,6 +2253,8 @@
       const totalSales = filteredOrders.reduce((s, o) => s + (o.price || 0), 0);
       const deliveryOrders = filteredOrders.filter(o => (o.deliveryFee || 0) > 0);
       const totalDeliveryFee = filteredOrders.reduce((s, o) => s + (o.deliveryFee || 0), 0);
+      
+      // تەواوی خێری تۆ لە گەیاندن
       const totalDeliveryProfit = filteredOrders.reduce((s, o) => s + (o.deliveryProfit || 0), 0);
 
       const pending = filteredOrders.filter(o => o.payment === 'unpaid').reduce((s, o) => s + (o.price || 0) + (o.deliveryFee || 0), 0);
@@ -2187,6 +2266,7 @@
       const debt = finances.filter(f => f.type === 'debt').reduce((s, f) => s + (f.amount || 0), 0);
       const assetsVal = assets.reduce((s, a) => s + (a.price || 0), 0);
 
+      // قازانجی گشتی = فرۆشتن + خێری گەیاندن - مەسرەف
       const netProfit = (totalSales + totalDeliveryProfit) - allExpenses;
       const avgOrder = filteredOrders.length > 0 ? Math.round(totalSales / filteredOrders.length) : 0;
 
@@ -2209,7 +2289,7 @@
       setEl('dExpenseTotal', allExpenses.toLocaleString() + ' IQD');
       setEl('dAvgOrder', avgOrder.toLocaleString() + ' IQD');
 
-      // داتای باڕەکانی ۱۲ مانگ
+      // بارەکانی مانگانە
       const monthlyTotals = new Array(12).fill(0);
       orders.forEach(o => {
         const d = o.orderDate ? new Date(o.orderDate) : new Date(o.id);
@@ -2234,10 +2314,11 @@
         </div>`;
       }).join('');
 
-      // داتا ئەنەلایزی کتێبەکان و پەڕەکان لەناو filteredOrders
-      const qAnalytics = (document.getElementById('analyticsSearchInput')?.value || '').trim().toLowerCase();
-      
-      // ژماردنی فرۆشی هەر جۆرە کتێبێک
+      // داتا ئەنەلایز بە سێرچی زیرەک
+      const rawQAnalytics = (document.getElementById('analyticsSearchInput')?.value || '').trim();
+      const qAnalytics = rawQAnalytics.toLowerCase();
+      const qAnalyticsNum = cleanNumStr(rawQAnalytics);
+
       const bookCounts = {};
       const pageCounts = {};
 
@@ -2250,25 +2331,33 @@
         });
       });
 
-      // ڕیزبەندی کتێبەکان بەپێی زۆرترین
       const sortedBooks = Object.entries(bookCounts).sort((a,b) => b[1] - a[1]);
       const topBooksBox = document.getElementById('topBooksAnalyticsList');
-      topBooksBox.innerHTML = sortedBooks.filter(([name]) => !qAnalytics || name.toLowerCase().includes(qAnalytics)).map(([name, count]) => `
+      topBooksBox.innerHTML = sortedBooks.filter(([name, count]) => {
+        if (!qAnalytics) return true;
+        let m = name.toLowerCase().includes(qAnalytics);
+        if (qAnalyticsNum && String(count).includes(qAnalyticsNum)) m = true;
+        return m;
+      }).map(([name, count]) => `
         <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:3px 6px; background:#f8fafc; border-radius:6px;">
           <span>📚 ${name}</span>
           <strong style="color:var(--c-purple);">${count} داواکاری</strong>
         </div>
-      `).join('') || '<div style="font-size:11px; color:#94a3b8;">هیچ داتایەک نەدۆزرایەوە</div>';
+      `).join('') || '<div style="font-size:11px; color:#94a3b8;">هیچ بەرهەمێک نەدۆزرایەوە</div>';
 
-      // ڕیزبەندی پەڕەکان بەپێی زۆرترین
       const sortedPages = Object.entries(pageCounts).sort((a,b) => b[1] - a[1]);
       const topPagesBox = document.getElementById('topPagesAnalyticsList');
-      topPagesBox.innerHTML = sortedPages.filter(([name]) => !qAnalytics || name.toLowerCase().includes(qAnalytics)).map(([name, count]) => `
+      topPagesBox.innerHTML = sortedPages.filter(([name, count]) => {
+        if (!qAnalytics) return true;
+        let m = name.toLowerCase().includes(qAnalytics);
+        if (qAnalyticsNum && String(count).includes(qAnalyticsNum)) m = true;
+        return m;
+      }).map(([name, count]) => `
         <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:3px 6px; background:#f8fafc; border-radius:6px;">
           <span>📄 ${name}</span>
           <strong style="color:var(--c-green);">${count} جار سەحی لێدراوە</strong>
         </div>
-      `).join('') || '<div style="font-size:11px; color:#94a3b8;">هیچ داتایەک نەدۆزرایەوە</div>';
+      `).join('') || '<div style="font-size:11px; color:#94a3b8;">هیچ پەڕەیەک نەدۆزرایەوە</div>';
     }
 
     window.onload = () => {
