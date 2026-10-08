@@ -112,7 +112,6 @@
       width: 100%;
     }
 
-    /* بەشی فلتەری کات و ئینسایت */
     .filter-bar {
       background: #ffffff;
       padding: 0.8rem 1rem;
@@ -151,14 +150,18 @@
       align-items: center;
       min-width: 36px;
       gap: 3px;
+      cursor: pointer;
     }
 
     .bar-stick {
       width: 100%;
       background: var(--c-blue);
       border-radius: 5px 5px 0 0;
-      transition: height 0.4s ease;
+      transition: all 0.3s ease;
       min-height: 4px;
+    }
+    .bar-col:hover .bar-stick {
+      filter: brightness(1.15);
     }
 
     .bar-label {
@@ -191,16 +194,43 @@
       flex-direction: column;
       justify-content: center;
       position: relative;
+      user-select: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .color-card.clickable {
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .color-card.clickable:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 14px rgba(0,0,0,0.12);
     }
+
+    .card-reorder-btns {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      display: none;
+      gap: 3px;
+      z-index: 5;
+    }
+    .reorder-active .card-reorder-btns {
+      display: flex;
+    }
+    .reorder-btn {
+      background: rgba(0,0,0,0.4);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .reorder-btn:hover { background: rgba(0,0,0,0.7); }
 
     .color-card .title { font-size: 13.5px; font-weight: 700; margin-bottom: 0.3rem; }
     .color-card .val { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
@@ -395,13 +425,10 @@
     <!-- داشبۆرد و داتا ئینسایت -->
     <div id="dashboardTab" class="view-panel">
       
-      <!-- شریتی دیاریکردنی کات (ئینسایت بۆ ئەم مانگە، مانگی پێشوو، هتد) -->
+      <!-- شریتی فلتەری کات و دوگمەی ڕێکخستنی جێگۆڕکێی کارتەکان -->
       <div class="filter-bar">
-        <div>
+        <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
           <strong style="color:var(--c-purple); font-size:14px;">📅 داتا ئینسایت (دیاریکردنی کات):</strong>
-          <span style="font-size:12px; color:var(--text-muted); margin-right:4px;">داتاکانی خوارەوە بەپێی ئەم کاتە دەگۆڕێن</span>
-        </div>
-        <div style="display:flex; gap:0.5rem; align-items:center;">
           <select id="timeFilterSelect" class="form-control" style="width:170px; font-weight:bold; color:var(--c-purple);" onchange="calculateStats()">
             <option value="all">کۆی گشتی (هەموو کاتێک)</option>
             <option value="this_month" selected>ئەم مانگە (مانگی ئێستا)</option>
@@ -409,84 +436,23 @@
             <option value="this_year">ئەمساڵ (تەواوی ساڵ)</option>
           </select>
         </div>
+        <div>
+          <button class="btn btn-secondary btn-sm" id="btnToggleReorder" onclick="toggleReorderMode()">⚙️ دەستکاری و جێگۆڕکێی کارتەکان</button>
+        </div>
       </div>
 
-      <!-- گرافیکی بارەکان بۆ ۱۲ مانگ -->
+      <!-- ئاماری بارەکانی مانگانە -->
       <div class="chart-container">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-          <strong style="font-size:13px; color:var(--text);">📊 ئاماری فرۆشتنی مانگانە</strong>
-          <span style="font-size:11px; color:var(--text-muted);">مانگی دیاریکراو بە ڕەنگی مۆر دەردەکەوێت</span>
+          <strong style="font-size:13px; color:var(--text);">📊 ئاماری فرۆشتنی مانگانەی پڕۆژە (کلیک لەسەر مانگەکان بکە)</strong>
+          <span style="font-size:11px; color:var(--text-muted);">مانگی هەڵبژێردراو بە ڕەنگی مۆر دەردەکەوێت</span>
         </div>
         <div class="chart-bars" id="monthlyChartContainer"></div>
       </div>
 
-      <!-- کارتە ڕەنگاوڕەنگەکان (ئۆتۆماتیکی بەپێی فلتەری سەرەوە نوێ دەبنەوە) -->
-      <div class="colorful-grid">
-        <div class="color-card bg-purple">
-          <div class="title">کۆی داواکاری لەم کاتەدا</div>
-          <div class="val" id="dTotalOrders">0</div>
-        </div>
-        <div class="color-card bg-blue">
-          <div class="title">چالاک</div>
-          <div class="val" id="dActiveOrders">0</div>
-        </div>
-        <div class="color-card bg-green">
-          <div class="title">تەواوبوو</div>
-          <div class="val" id="dCompletedOrders">0</div>
-        </div>
-        <div class="color-card bg-pink">
-          <div class="title">فرۆشتنی کتێب لەم کاتەدا</div>
-          <div class="val" id="dTotalSales">0</div>
-          <div class="sub">IQD (بێ گەیاندن)</div>
-        </div>
-
-        <div class="color-card bg-teal clickable" onclick="openDeliveryModal()" title="کلیک بکە بۆ بینینی خشتەی وردەکاریی گەیاندن">
-          <div class="title">کۆی گەیاندنەکان 🚚 (کلیک بکە)</div>
-          <div class="val" id="dDeliveryTotal">0</div>
-          <div class="sub" id="dDeliverySub">0 IQD (0 گەیاندن)</div>
-        </div>
-
-        <div class="color-card bg-indigo clickable" onclick="openDeliveryModal()" title="کلیک بکە بۆ بینینی خشتەی خێر">
-          <div class="title">خێری تۆ لە گەیاندن ✨</div>
-          <div class="val" id="dDeliveryProfitTotal">0</div>
-          <div class="sub">IQD (چووەتە سەر قازانج)</div>
-        </div>
-
-        <div class="color-card bg-orange">
-          <div class="title">قازانجی پاکژ لەم کاتەدا 💎</div>
-          <div class="val" id="dNetProfit">0</div>
-          <div class="sub">فرۆشتن + خێری گەیاندن - مەسرەفەکان</div>
-        </div>
-
-        <div class="color-card bg-red">
-          <div class="title">پارەی نەگەیشتوو لەم کاتەدا</div>
-          <div class="val" id="dPendingPay">0</div>
-          <div class="sub">IQD (کتێب + گەیاندن)</div>
-        </div>
-
-        <div class="color-card bg-red">
-          <div class="title">قەرزی ماوە (قەرزی کراوە) 📌</div>
-          <div class="val" id="dDebtTotal">0</div>
-          <div class="sub">IQD (قەرزی سەر خۆمان)</div>
-        </div>
-
-        <div class="color-card bg-indigo">
-          <div class="title">نرخی جیهاز و ئامێرەکان 🖥️</div>
-          <div class="val" id="dAssetsCost">0</div>
-          <div class="sub">IQD (سەرمایەی ئامێر)</div>
-        </div>
-
-        <div class="color-card bg-teal">
-          <div class="title">کۆی مەسرەفی کار و ماڵ 💳</div>
-          <div class="val" id="dExpenseTotal">0</div>
-          <div class="sub">IQD (لە بەشی مەسرەفی کار + ماڵ)</div>
-        </div>
-
-        <div class="color-card bg-purple">
-          <div class="title">ناوەندی نرخی هەر تەڵەبێک 📈</div>
-          <div class="val" id="dAvgOrder">0</div>
-          <div class="sub">IQD</div>
-        </div>
+      <!-- کارتی ئامارەکان کە توانای جێگۆڕکێیان هەیە -->
+      <div class="colorful-grid" id="mainCardsGrid">
+        <!-- بە پشتبەستن بە ڕیزبەندی داڕێژراو دروست دەبێت -->
       </div>
     </div>
 
@@ -518,7 +484,7 @@
       </div>
     </div>
 
-    <!-- بەشی مەسرەفی کار: حیبر، وەرەقە، دەستحەق... -->
+    <!-- تابی سەربەخۆی مەسرەفی کار (حیبر، وەرەقە، دەستحەق...) -->
     <div id="workExpensesTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem;">
         <div>
@@ -640,7 +606,7 @@
     </div>
   </div>
 
-  <!-- مۆداڵی داواکاری (بە بەروار بۆ داتا ئینتری) -->
+  <!-- مۆداڵی داواکاری -->
   <div id="orderModal" class="modal">
     <div class="modal-box">
       <h3 id="orderModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">داواکاری</h3>
@@ -891,6 +857,25 @@
     let pageTypes = ["ستاندارت (فێرکاری گشتی)", "پەڕەی ژمارە و ئەندازە", "پەڕەی ئاژەڵان و ڕەنگەکان", "پەڕەی ناوی تایبەتی منداڵ", "پەڕەی جیاکردنەوەی شێوەکان", "پەڕەی تەقەڵی دەستی", "پەڕەی ژماردنی میوەکان", "پەڕەی کەشوهەوا"];
     let currentImages = [];
 
+    // کلیلەکانی ڕێکخستنی جێگۆڕکێی کارتەکان لە داشبۆرد
+    let isReorderMode = false;
+    let cardOrder = ["card_orders", "card_active", "card_completed", "card_sales", "card_delivery", "card_delivery_profit", "card_net_profit", "card_pending", "card_debt", "card_assets", "card_expenses", "card_avg"];
+
+    const cardDefinitions = {
+      card_orders: { title: "کۆی داواکاری لەم کاتەدا", bg: "bg-purple", idVal: "dTotalOrders", sub: "", onClick: "switchTab('ordersTab')" },
+      card_active: { title: "چالاک", bg: "bg-blue", idVal: "dActiveOrders", sub: "", onClick: "switchTab('ordersTab')" },
+      card_completed: { title: "تەواوبوو", bg: "bg-green", idVal: "dCompletedOrders", sub: "", onClick: "switchTab('completedTab')" },
+      card_sales: { title: "فرۆشتنی کتێب لەم کاتەدا", bg: "bg-pink", idVal: "dTotalSales", sub: "IQD (بێ گەیاندن)", onClick: "switchTab('ordersTab')" },
+      card_delivery: { title: "کۆی گەیاندنەکان 🚚 (کلیک بکە)", bg: "bg-teal", idVal: "dDeliveryTotal", subId: "dDeliverySub", sub: "0 IQD (0 گەیاندن)", onClick: "openDeliveryModal()" },
+      card_delivery_profit: { title: "خێری تۆ لە گەیاندن ✨", bg: "bg-indigo", idVal: "dDeliveryProfitTotal", sub: "IQD (چووەتە سەر قازانج)", onClick: "openDeliveryModal()" },
+      card_net_profit: { title: "قازانجی پاکژ لەم کاتەدا 💎", bg: "bg-orange", idVal: "dNetProfit", sub: "فرۆشتن + خێری گەیاندن - مەسرەفەکان", onClick: null },
+      card_pending: { title: "پارەی نەگەیشتوو لەم کاتەدا", bg: "bg-red", idVal: "dPendingPay", sub: "IQD (کتێب + گەیاندن)", onClick: "switchTab('ordersTab')" },
+      card_debt: { title: "قەرزی ماوە (قەرزی کراوە) 📌", bg: "bg-red", idVal: "dDebtTotal", sub: "IQD (قەرزی سەر خۆمان)", onClick: "switchTab('financeTab')" },
+      card_assets: { title: "نرخی جیهاز و ئامێرەکان 🖥️", bg: "bg-indigo", idVal: "dAssetsCost", sub: "IQD (سەرمایەی ئامێر)", onClick: "switchTab('assetsTab')" },
+      card_expenses: { title: "کۆی مەسرەفی کار و ماڵ 💳", bg: "bg-teal", idVal: "dExpenseTotal", sub: "IQD (لە بەشی مەسرەفی کار + ماڵ)", onClick: "switchTab('workExpensesTab')" },
+      card_avg: { title: "ناوەندی نرخی هەر تەڵەبێک 📈", bg: "bg-purple", idVal: "dAvgOrder", sub: "IQD", onClick: null }
+    };
+
     function syncFromCloud() {
       const cachedOrders = localStorage.getItem('th_orders');
       if (cachedOrders) {
@@ -903,6 +888,7 @@
           workExpenses = JSON.parse(localStorage.getItem('th_work_expenses') || '[]');
           bookTypes = JSON.parse(localStorage.getItem('th_book_types') || JSON.stringify(bookTypes));
           pageTypes = JSON.parse(localStorage.getItem('th_page_types') || JSON.stringify(pageTypes));
+          cardOrder = JSON.parse(localStorage.getItem('th_card_order') || JSON.stringify(cardOrder));
           refreshAllUI();
         } catch(e) {}
       }
@@ -918,6 +904,7 @@
           workExpenses = val.workExpenses || [];
           bookTypes = val.bookTypes || bookTypes;
           pageTypes = val.pageTypes || pageTypes;
+          if (val.cardOrder) cardOrder = val.cardOrder;
 
           localStorage.setItem('th_orders', JSON.stringify(orders));
           localStorage.setItem('th_finances', JSON.stringify(finances));
@@ -927,6 +914,7 @@
           localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
           localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
           localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
+          localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
           
           refreshAllUI();
         }
@@ -942,14 +930,16 @@
       localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
       localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
       localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
+      localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
       refreshAllUI();
 
       db.ref('tinyhands_data').set({
-        orders, finances, assets, trash, workCategories, workExpenses, bookTypes, pageTypes
+        orders, finances, assets, trash, workCategories, workExpenses, bookTypes, pageTypes, cardOrder
       });
     }
 
     function refreshAllUI() {
+      renderCardsGrid();
       renderOrders();
       renderCompleted();
       renderSettings();
@@ -982,11 +972,61 @@
     function switchTab(tabId) {
       document.querySelectorAll('.view-panel').forEach(el => el.style.display = 'none');
       document.querySelectorAll('.nav-pill').forEach(el => el.classList.remove('active'));
-      document.getElementById(tabId).style.display = 'block';
-      event.currentTarget.classList.add('active');
+      const target = document.getElementById(tabId);
+      if(target) target.style.display = 'block';
+      const pills = Array.from(document.querySelectorAll('.nav-pill'));
+      const found = pills.find(p => p.getAttribute('onclick')?.includes(tabId));
+      if (found) found.classList.add('active');
     }
 
-    // بەڕێوەبردنی مەسرەفی کار (حیبر، وەرەقە، دەستحەق)
+    // سیستەمی جێگۆڕکێی کارتەکان لە ڕووکار
+    function toggleReorderMode() {
+      isReorderMode = !isReorderMode;
+      const grid = document.getElementById('mainCardsGrid');
+      const btn = document.getElementById('btnToggleReorder');
+      if (isReorderMode) {
+        grid.classList.add('reorder-active');
+        btn.innerText = '✅ تەواوکردنی ڕێکخستن';
+        btn.className = 'btn btn-success btn-sm';
+      } else {
+        grid.classList.remove('reorder-active');
+        btn.innerText = '⚙️ دەستکاری و جێگۆڕکێی کارتەکان';
+        btn.className = 'btn btn-secondary btn-sm';
+      }
+    }
+
+    function moveCard(index, direction) {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= cardOrder.length) return;
+      // ئاڵوگۆڕی شوێنی دوو کارتەکە بە شێوەیەکی پڕکەرەوە
+      const temp = cardOrder[index];
+      cardOrder[index] = cardOrder[targetIndex];
+      cardOrder[targetIndex] = temp;
+      syncToCloud();
+    }
+
+    function renderCardsGrid() {
+      const grid = document.getElementById('mainCardsGrid');
+      grid.innerHTML = cardOrder.map((key, idx) => {
+        const item = cardDefinitions[key];
+        if(!item) return '';
+        const clickAttr = item.onClick && !isReorderMode ? `onclick="${item.onClick}"` : '';
+        const clickableClass = item.onClick ? 'clickable' : '';
+
+        return `
+        <div class="color-card ${item.bg} ${clickableClass}" ${clickAttr} data-cardkey="${key}">
+          <div class="card-reorder-btns">
+            ${idx > 0 ? `<button class="reorder-btn" title="بڕۆ بۆ پێشەوە" onclick="event.stopPropagation(); moveCard(${idx}, -1);">◀</button>` : ''}
+            ${idx < cardOrder.length - 1 ? `<button class="reorder-btn" title="بڕۆ بۆ دواوە" onclick="event.stopPropagation(); moveCard(${idx}, 1);">▶</button>` : ''}
+          </div>
+          <div class="title">${item.title}</div>
+          <div class="val" id="${item.idVal}">0</div>
+          <div class="sub" ${item.subId ? `id="${item.subId}"` : ''}>${item.sub}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // بەڕێوەبردنی کەرەستە و مەسرەفی کار (حیبر، وەرەقە، دەستحەق)
     function openNewCategoryModal() {
       document.getElementById('catNameInput').value = '';
       document.getElementById('newCategoryModal').style.display = 'flex';
@@ -1517,14 +1557,13 @@
       `).join('') || '<tr><td colspan="4" style="text-align:center;">هیچ ئامێرێک نییە</td></tr>';
     }
 
-    // ژماردنی ئامارەکان بەپێی فلتەری کات (ئەم مانگە، مانگی ڕابردوو، کۆی گشتی)
+    // ژماردنی ئامارەکان بەپێی فلتەری کات
     function calculateStats() {
       const filterMode = document.getElementById('timeFilterSelect').value;
       const now = new Date();
       const curY = now.getFullYear();
-      const curM = now.getMonth() + 1; // 1 to 12
+      const curM = now.getMonth() + 1;
 
-      // ١. فلتەرکردنی داواکارییەکان
       let filteredOrders = orders;
       if (filterMode === 'this_month') {
         filteredOrders = orders.filter(o => {
@@ -1545,7 +1584,6 @@
         });
       }
 
-      // ٢. فلتەرکردنی مەسرەفی کار (حیبر، وەرەقە...)
       let filteredWorkExp = workExpenses;
       if (filterMode === 'this_month') {
         filteredWorkExp = workExpenses.filter(e => {
@@ -1566,7 +1604,6 @@
         });
       }
 
-      // حسابات
       const totalSales = filteredOrders.reduce((s, o) => s + (o.price || 0), 0);
       const deliveryOrders = filteredOrders.filter(o => (o.deliveryFee || 0) > 0);
       const totalDeliveryFee = filteredOrders.reduce((s, o) => s + (o.deliveryFee || 0), 0);
@@ -1584,25 +1621,26 @@
       const netProfit = (totalSales + totalDeliveryProfit) - allExpenses;
       const avgOrder = filteredOrders.length > 0 ? Math.round(totalSales / filteredOrders.length) : 0;
 
-      // نیشاندان لەسەر کارتەکان
-      document.getElementById('dTotalOrders').innerText = filteredOrders.length;
-      document.getElementById('dActiveOrders').innerText = filteredOrders.filter(o => !o.completed).length;
-      document.getElementById('dCompletedOrders').innerText = filteredOrders.filter(o => o.completed).length;
-      document.getElementById('dTotalSales').innerText = totalSales.toLocaleString() + ' IQD';
-      
-      document.getElementById('dDeliveryTotal').innerText = totalDeliveryFee.toLocaleString() + ' IQD';
-      document.getElementById('dDeliverySub').innerText = `${deliveryOrders.length} داواکاری گەیاندن`;
-      
-      document.getElementById('dDeliveryProfitTotal').innerText = totalDeliveryProfit.toLocaleString() + ' IQD';
-      document.getElementById('dPendingPay').innerText = pending.toLocaleString() + ' IQD';
-      document.getElementById('dNetProfit').innerText = netProfit.toLocaleString() + ' IQD';
-      
-      document.getElementById('dDebtTotal').innerText = debt.toLocaleString() + ' IQD';
-      document.getElementById('dAssetsCost').innerText = assetsVal.toLocaleString() + ' IQD';
-      document.getElementById('dExpenseTotal').innerText = allExpenses.toLocaleString() + ' IQD';
-      document.getElementById('dAvgOrder').innerText = avgOrder.toLocaleString() + ' IQD';
+      const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
 
-      // داتای گرافیکی بارەکانی مانگانە
+      setEl('dTotalOrders', filteredOrders.length);
+      setEl('dActiveOrders', filteredOrders.filter(o => !o.completed).length);
+      setEl('dCompletedOrders', filteredOrders.filter(o => o.completed).length);
+      setEl('dTotalSales', totalSales.toLocaleString() + ' IQD');
+      
+      setEl('dDeliveryTotal', totalDeliveryFee.toLocaleString() + ' IQD');
+      setEl('dDeliverySub', `${deliveryOrders.length} داواکاری گەیاندن`);
+      
+      setEl('dDeliveryProfitTotal', totalDeliveryProfit.toLocaleString() + ' IQD');
+      setEl('dPendingPay', pending.toLocaleString() + ' IQD');
+      setEl('dNetProfit', netProfit.toLocaleString() + ' IQD');
+      
+      setEl('dDebtTotal', debt.toLocaleString() + ' IQD');
+      setEl('dAssetsCost', assetsVal.toLocaleString() + ' IQD');
+      setEl('dExpenseTotal', allExpenses.toLocaleString() + ' IQD');
+      setEl('dAvgOrder', avgOrder.toLocaleString() + ' IQD');
+
+      // داتای باڕەکانی ۱۲ مانگ
       const monthlyTotals = new Array(12).fill(0);
       orders.forEach(o => {
         const d = o.orderDate ? new Date(o.orderDate) : new Date(o.id);
@@ -1620,7 +1658,7 @@
         const h = Math.max((val / maxVal) * 115, 6);
         const isCurrent = (idx + 1) === curM;
         return `
-        <div class="bar-col">
+        <div class="bar-col" title="کلیک بکە بۆ فلتەرکردنی ئەم مانگە" onclick="document.getElementById('timeFilterSelect').value='${isCurrent?'this_month':'all'}'; calculateStats();">
           <span style="font-size:9px; color:var(--text-muted); font-weight:bold;">${val > 0 ? (val/1000).toFixed(0)+'k' : ''}</span>
           <div class="bar-stick" style="height:${h}px; background:${isCurrent ? 'var(--c-purple)' : 'var(--c-blue)'};"></div>
           <span class="bar-label">${idx + 1}</span>
