@@ -49,7 +49,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding-bottom: 50px;
+      padding-bottom: 60px;
     }
 
     header {
@@ -160,9 +160,7 @@
       transition: all 0.3s ease;
       min-height: 4px;
     }
-    .bar-col:hover .bar-stick {
-      filter: brightness(1.15);
-    }
+    .bar-col:hover .bar-stick { filter: brightness(1.15); }
 
     .bar-label {
       font-size: 11px;
@@ -184,6 +182,7 @@
       .colorful-grid { grid-template-columns: 1fr; }
     }
 
+    /* کارتی Drag & Drop */
     .color-card {
       border-radius: 16px;
       padding: 1.2rem 1rem;
@@ -195,42 +194,23 @@
       justify-content: center;
       position: relative;
       user-select: none;
+      cursor: grab;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .color-card.clickable {
-      cursor: pointer;
-    }
-    .color-card.clickable:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+    .color-card:active {
+      cursor: grabbing;
     }
 
-    .card-reorder-btns {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      display: none;
-      gap: 3px;
-      z-index: 5;
+    .color-card.dragging {
+      opacity: 0.4;
+      transform: scale(0.96);
     }
-    .reorder-active .card-reorder-btns {
-      display: flex;
+
+    .color-card.drag-over {
+      outline: 3px dashed #ffffff;
+      outline-offset: -3px;
     }
-    .reorder-btn {
-      background: rgba(0,0,0,0.4);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      width: 22px;
-      height: 22px;
-      font-size: 11px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .reorder-btn:hover { background: rgba(0,0,0,0.7); }
 
     .color-card .title { font-size: 13.5px; font-weight: 700; margin-bottom: 0.3rem; }
     .color-card .val { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
@@ -378,15 +358,47 @@
       background: #10b981;
       margin-left: 4px;
     }
+
+    /* نۆتیفیکەیشن */
+    #toastNotification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #0f172a;
+      color: #fff;
+      padding: 0.7rem 1.4rem;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: bold;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      z-index: 3000;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    #toastNotification.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
 
-  <!-- مۆداڵی لۆگین -->
+  <!-- نۆتیفیکەیشن -->
+  <div id="toastNotification">
+    <span id="toastIcon">🔔</span>
+    <span id="toastMsg">کردارەکە سەرکەوتوو بوو</span>
+  </div>
+
+  <!-- مۆداڵی لۆگین (بەبێ ڕەمزی کاڵکراوە) -->
   <div id="loginOverlay">
     <div class="login-box">
       <h2 style="color: var(--c-purple); margin-bottom: 0.4rem;">تینی هاندس ✋</h2>
-      <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 1rem;">بەخێربێن بۆ سیستەمی ئۆنلاین</p>
+      <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 1rem;">بەخێربێن بۆ سیستەمی بەڕێوەبردن</p>
       <div style="text-align: right; margin-bottom: 0.8rem;">
         <label style="font-size: 12.5px; font-weight: bold;">بەکارهێنەر:</label>
         <select id="userSelect" class="form-control" style="margin-top: 3px;">
@@ -395,8 +407,8 @@
         </select>
       </div>
       <div style="text-align: right; margin-bottom: 1rem;">
-        <label style="font-size: 12.5px; font-weight: bold;">وشەی نهێنی (tiny4321):</label>
-        <input type="password" id="passInput" class="form-control" placeholder="tiny4321" style="margin-top: 3px;">
+        <label style="font-size: 12.5px; font-weight: bold;">وشەی نهێنی:</label>
+        <input type="password" id="passInput" class="form-control" placeholder="" style="margin-top: 3px;">
       </div>
       <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="login()">چوونەژوورەوە</button>
       <p id="loginError" style="color: var(--c-red); font-size: 12px; margin-top: 6px; display: none;">وشەی نهێنی هەڵەیە!</p>
@@ -413,6 +425,7 @@
       <button class="nav-pill" onclick="switchTab('settingsTab')">📑 جۆرەکان و پەڕەکان</button>
       <button class="nav-pill" onclick="switchTab('financeTab')">💰 دارایی و FIB</button>
       <button class="nav-pill" onclick="switchTab('assetsTab')">🖥️ ئامێرەکان</button>
+      <button class="nav-pill" onclick="switchTab('logsTab')">📜 لۆگ و مێژوو</button>
       <button class="nav-pill trash-pill" onclick="switchTab('trashTab')">🗑️ تەنەکەی خۆڵ (<span id="trashCount">0</span>)</button>
     </div>
     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -425,7 +438,6 @@
     <!-- داشبۆرد و داتا ئینسایت -->
     <div id="dashboardTab" class="view-panel">
       
-      <!-- شریتی فلتەری کات و دوگمەی ڕێکخستنی جێگۆڕکێی کارتەکان -->
       <div class="filter-bar">
         <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
           <strong style="color:var(--c-purple); font-size:14px;">📅 داتا ئینسایت (دیاریکردنی کات):</strong>
@@ -436,24 +448,22 @@
             <option value="this_year">ئەمساڵ (تەواوی ساڵ)</option>
           </select>
         </div>
-        <div>
-          <button class="btn btn-secondary btn-sm" id="btnToggleReorder" onclick="toggleReorderMode()">⚙️ دەستکاری و جێگۆڕکێی کارتەکان</button>
+        <div style="font-size:12px; color:var(--text-muted);">
+          💡 دەتوانیت کارتەکان بە ماوس یان پەنجە بە ئاسۆیی و ستوونی ڕابکێشیت بۆ گۆڕینی شوێنیان.
         </div>
       </div>
 
       <!-- ئاماری بارەکانی مانگانە -->
       <div class="chart-container">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-          <strong style="font-size:13px; color:var(--text);">📊 ئاماری فرۆشتنی مانگانەی پڕۆژە (کلیک لەسەر مانگەکان بکە)</strong>
-          <span style="font-size:11px; color:var(--text-muted);">مانگی هەڵبژێردراو بە ڕەنگی مۆر دەردەکەوێت</span>
+          <strong style="font-size:13px; color:var(--text);">📊 ئاماری فرۆشتنی مانگانە</strong>
+          <span style="font-size:11px; color:var(--text-muted);">مانگی هەڵبژێردراو بە مۆر دەردەکەوێت</span>
         </div>
         <div class="chart-bars" id="monthlyChartContainer"></div>
       </div>
 
-      <!-- کارتی ئامارەکان کە توانای جێگۆڕکێیان هەیە -->
-      <div class="colorful-grid" id="mainCardsGrid">
-        <!-- بە پشتبەستن بە ڕیزبەندی داڕێژراو دروست دەبێت -->
-      </div>
+      <!-- کارتی ئامارەکان بە سیستەمی ڕاکێشان و بەردان (Drag & Drop) -->
+      <div class="colorful-grid" id="mainCardsGrid"></div>
     </div>
 
     <!-- داواکارییەکان -->
@@ -484,7 +494,7 @@
       </div>
     </div>
 
-    <!-- تابی سەربەخۆی مەسرەفی کار (حیبر، وەرەقە، دەستحەق...) -->
+    <!-- مەسرەفی کار (حیبر، وەرەقە...) -->
     <div id="workExpensesTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem;">
         <div>
@@ -495,7 +505,6 @@
           <button class="btn btn-primary btn-sm" onclick="openNewCategoryModal()">+ دروستکردنی جۆری مەسرەف (وەک: حیبر)</button>
         </div>
       </div>
-
       <div id="workExpenseCategoriesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
     </div>
 
@@ -584,11 +593,32 @@
       </div>
     </div>
 
-    <!-- تەنەکەی خۆڵ -->
+    <!-- بەشی نوێ: لۆگ و مێژوو -->
+    <div id="logsTab" class="view-panel" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+        <h3>📜 تۆماری جووڵە و مێژوو (Activity Logs)</h3>
+        <button class="btn btn-secondary btn-sm" onclick="clearLogs()">پاککردنەوەی لۆگەکان</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>بەکارهێنەر</th>
+              <th>جۆری جووڵە</th>
+              <th>وەسف و وردەکاری</th>
+              <th>کات و بەروار</th>
+            </tr>
+          </thead>
+          <tbody id="logsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- تەنەکەی خۆڵ (بە سڕینەوەی دانە بە دانە) -->
     <div id="trashTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
         <h3 style="color:var(--c-red);">تەنەکەی خۆڵ</h3>
-        <button class="btn btn-danger btn-sm" onclick="emptyTrash()">بەتاڵکردنی هەمووی</button>
+        <button class="btn btn-danger btn-sm" onclick="emptyTrash()">بەتاڵکردنی هەمووی بە یەکجاری</button>
       </div>
       <div class="table-card">
         <table>
@@ -597,7 +627,8 @@
               <th>بەش</th>
               <th>ناونیشان</th>
               <th>کێ سڕییەوە</th>
-              <th>کردار</th>
+              <th>بەروار</th>
+              <th>کردارەکان</th>
             </tr>
           </thead>
           <tbody id="trashTableBody"></tbody>
@@ -623,7 +654,7 @@
       </div>
       <div class="grid-2" style="margin-top:0.4rem;">
         <div>
-          <label style="font-size:12px; font-weight:bold; color:var(--c-purple);">بەرواری داواکاری (داتا ئینتری مانگی تر):</label>
+          <label style="font-size:12px; font-weight:bold; color:var(--c-purple);">بەرواری داواکاری:</label>
           <input type="date" id="mOrderDate" class="form-control">
         </div>
         <div>
@@ -641,7 +672,6 @@
           <select id="mBookTypeSelect" class="form-control"></select>
         </div>
       </div>
-      <!-- خانەی گەیاندن و خێر -->
       <div class="grid-2" style="margin-top:0.4rem; background: #eef2ff; padding: 0.6rem; border-radius: 8px; border: 1px dashed var(--c-purple);">
         <div>
           <label style="font-size:12px; font-weight:bold; color: var(--c-purple);">پارەی گەیاندن (IQD):</label>
@@ -685,13 +715,13 @@
     </div>
   </div>
 
-  <!-- مۆداڵی دروستکردنی جۆری مەسرەف -->
+  <!-- مۆداڵی جۆری مەسرەف -->
   <div id="newCategoryModal" class="modal">
     <div class="modal-box" style="max-width:380px;">
       <h3 style="margin-bottom:0.8rem; color:var(--c-purple);">زیادکردنی جۆری مەسرەف</h3>
       <div style="margin-bottom:0.8rem;">
         <label style="font-size:12px; font-weight:bold;">ناوی جۆرەکە:</label>
-        <input type="text" id="catNameInput" class="form-control" placeholder="وەک: حیبر، وەرەقەی فۆتۆ، حەقی دەست">
+        <input type="text" id="catNameInput" class="form-control" placeholder="وەک: حیبر، وەرەقە، حەقی دەست">
       </div>
       <div style="display:flex; justify-content:flex-end; gap:0.4rem;">
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('newCategoryModal').style.display='none'">داخستن</button>
@@ -700,7 +730,7 @@
     </div>
   </div>
 
-  <!-- مۆداڵی کڕینی نوێ لەناو بەشێک -->
+  <!-- مۆداڵی کڕینی نوێ -->
   <div id="addExpenseEntryModal" class="modal">
     <div class="modal-box" style="max-width:400px;">
       <h3 style="margin-bottom:0.8rem; color:var(--c-purple);">تۆمارکردنی خەرجی</h3>
@@ -710,8 +740,8 @@
         <input type="text" id="entryCatDisplay" class="form-control" readonly style="background:#f8fafc; font-weight:bold;">
       </div>
       <div style="margin-bottom:0.6rem;">
-        <label style="font-size:12px; font-weight:bold;">وەسف (چیت کڕیوە یان بە کێت داوە):</label>
-        <input type="text" id="expDescInput" class="form-control" placeholder="وەک: کڕینی دوو پاکەت حیبری سوور">
+        <label style="font-size:12px; font-weight:bold;">وەسف:</label>
+        <input type="text" id="expDescInput" class="form-control" placeholder="وەک: دوو پاکەت حیبری ڕەش">
       </div>
       <div class="grid-2">
         <div>
@@ -833,6 +863,14 @@
       return isNaN(num) ? 0 : num;
     }
 
+    function showToast(msg, icon = '🔔') {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMsg').innerText = msg;
+      document.getElementById('toastIcon').innerText = icon;
+      toast.classList.add('show');
+      setTimeout(() => { toast.classList.remove('show'); }, 2800);
+    }
+
     const firebaseConfig = {
       apiKey: "AIzaSyCSUDoeRxAby4H-3T_5hFpN83xavJj0WGo",
       authDomain: "tiny-hands-9a93a.firebaseapp.com",
@@ -851,14 +889,13 @@
     let finances = [];
     let assets = [];
     let trash = [];
+    let activityLogs = [];
     let workCategories = ["حیبر", "وەرەقە و لامینەیت", "فریلانسەر و حەقی دەست"];
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
     let pageTypes = ["ستاندارت (فێرکاری گشتی)", "پەڕەی ژمارە و ئەندازە", "پەڕەی ئاژەڵان و ڕەنگەکان", "پەڕەی ناوی تایبەتی منداڵ", "پەڕەی جیاکردنەوەی شێوەکان", "پەڕەی تەقەڵی دەستی", "پەڕەی ژماردنی میوەکان", "پەڕەی کەشوهەوا"];
     let currentImages = [];
 
-    // کلیلەکانی ڕێکخستنی جێگۆڕکێی کارتەکان لە داشبۆرد
-    let isReorderMode = false;
     let cardOrder = ["card_orders", "card_active", "card_completed", "card_sales", "card_delivery", "card_delivery_profit", "card_net_profit", "card_pending", "card_debt", "card_assets", "card_expenses", "card_avg"];
 
     const cardDefinitions = {
@@ -876,6 +913,17 @@
       card_avg: { title: "ناوەندی نرخی هەر تەڵەبێک 📈", bg: "bg-purple", idVal: "dAvgOrder", sub: "IQD", onClick: null }
     };
 
+    function logAction(type, desc) {
+      activityLogs.unshift({
+        id: Date.now(),
+        user: currentUser || 'بەکارهێنەر',
+        type,
+        desc,
+        time: new Date().toLocaleString('ku-IQ')
+      });
+      if (activityLogs.length > 200) activityLogs.pop();
+    }
+
     function syncFromCloud() {
       const cachedOrders = localStorage.getItem('th_orders');
       if (cachedOrders) {
@@ -884,6 +932,7 @@
           finances = JSON.parse(localStorage.getItem('th_finances') || '[]');
           assets = JSON.parse(localStorage.getItem('th_assets') || '[]');
           trash = JSON.parse(localStorage.getItem('th_trash') || '[]');
+          activityLogs = JSON.parse(localStorage.getItem('th_activity_logs') || '[]');
           workCategories = JSON.parse(localStorage.getItem('th_work_categories') || JSON.stringify(workCategories));
           workExpenses = JSON.parse(localStorage.getItem('th_work_expenses') || '[]');
           bookTypes = JSON.parse(localStorage.getItem('th_book_types') || JSON.stringify(bookTypes));
@@ -900,6 +949,7 @@
           finances = val.finances || [];
           assets = val.assets || [];
           trash = val.trash || [];
+          activityLogs = val.activityLogs || [];
           workCategories = val.workCategories || workCategories;
           workExpenses = val.workExpenses || [];
           bookTypes = val.bookTypes || bookTypes;
@@ -910,6 +960,7 @@
           localStorage.setItem('th_finances', JSON.stringify(finances));
           localStorage.setItem('th_assets', JSON.stringify(assets));
           localStorage.setItem('th_trash', JSON.stringify(trash));
+          localStorage.setItem('th_activity_logs', JSON.stringify(activityLogs));
           localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
           localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
           localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
@@ -926,6 +977,7 @@
       localStorage.setItem('th_finances', JSON.stringify(finances));
       localStorage.setItem('th_assets', JSON.stringify(assets));
       localStorage.setItem('th_trash', JSON.stringify(trash));
+      localStorage.setItem('th_activity_logs', JSON.stringify(activityLogs));
       localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
       localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
       localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
@@ -934,7 +986,7 @@
       refreshAllUI();
 
       db.ref('tinyhands_data').set({
-        orders, finances, assets, trash, workCategories, workExpenses, bookTypes, pageTypes, cardOrder
+        orders, finances, assets, trash, activityLogs, workCategories, workExpenses, bookTypes, pageTypes, cardOrder
       });
     }
 
@@ -947,6 +999,7 @@
       renderAssets();
       renderWorkExpenses();
       renderTrash();
+      renderLogs();
       calculateStats();
     }
 
@@ -958,6 +1011,8 @@
         localStorage.setItem('th_user', user);
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('currentUserName').innerText = currentUser;
+        logAction('چوونەژوورەوە', `بەکارهێنەر ${user} چووە ژوورەوە`);
+        showToast(`بەخێربێیت ${user}`, '👋');
         syncFromCloud();
       } else {
         document.getElementById('loginError').style.display = 'block';
@@ -965,6 +1020,7 @@
     }
 
     function logout() {
+      logAction('دەرچوون', `بەکارهێنەر ${currentUser} دەرچوو`);
       localStorage.removeItem('th_user');
       location.reload();
     }
@@ -979,46 +1035,24 @@
       if (found) found.classList.add('active');
     }
 
-    // سیستەمی جێگۆڕکێی کارتەکان لە ڕووکار
-    function toggleReorderMode() {
-      isReorderMode = !isReorderMode;
-      const grid = document.getElementById('mainCardsGrid');
-      const btn = document.getElementById('btnToggleReorder');
-      if (isReorderMode) {
-        grid.classList.add('reorder-active');
-        btn.innerText = '✅ تەواوکردنی ڕێکخستن';
-        btn.className = 'btn btn-success btn-sm';
-      } else {
-        grid.classList.remove('reorder-active');
-        btn.innerText = '⚙️ دەستکاری و جێگۆڕکێی کارتەکان';
-        btn.className = 'btn btn-secondary btn-sm';
-      }
-    }
-
-    function moveCard(index, direction) {
-      const targetIndex = index + direction;
-      if (targetIndex < 0 || targetIndex >= cardOrder.length) return;
-      // ئاڵوگۆڕی شوێنی دوو کارتەکە بە شێوەیەکی پڕکەرەوە
-      const temp = cardOrder[index];
-      cardOrder[index] = cardOrder[targetIndex];
-      cardOrder[targetIndex] = temp;
-      syncToCloud();
-    }
+    /* سیستەمی Drag & Drop ی سروشتی بە ماوس و دەست (سەر، خوار، ڕاست، چەپ) */
+    let draggedCardKey = null;
 
     function renderCardsGrid() {
       const grid = document.getElementById('mainCardsGrid');
-      grid.innerHTML = cardOrder.map((key, idx) => {
+      grid.innerHTML = cardOrder.map((key) => {
         const item = cardDefinitions[key];
         if(!item) return '';
-        const clickAttr = item.onClick && !isReorderMode ? `onclick="${item.onClick}"` : '';
-        const clickableClass = item.onClick ? 'clickable' : '';
 
         return `
-        <div class="color-card ${item.bg} ${clickableClass}" ${clickAttr} data-cardkey="${key}">
-          <div class="card-reorder-btns">
-            ${idx > 0 ? `<button class="reorder-btn" title="بڕۆ بۆ پێشەوە" onclick="event.stopPropagation(); moveCard(${idx}, -1);">◀</button>` : ''}
-            ${idx < cardOrder.length - 1 ? `<button class="reorder-btn" title="بڕۆ بۆ دواوە" onclick="event.stopPropagation(); moveCard(${idx}, 1);">▶</button>` : ''}
-          </div>
+        <div class="color-card ${item.bg}" 
+             draggable="true" 
+             data-key="${key}"
+             ondragstart="handleDragStart(event)" 
+             ondragover="handleDragOver(event)" 
+             ondragleave="handleDragLeave(event)" 
+             ondrop="handleDrop(event)"
+             onclick="handleCardClick('${key}', event)">
           <div class="title">${item.title}</div>
           <div class="val" id="${item.idVal}">0</div>
           <div class="sub" ${item.subId ? `id="${item.subId}"` : ''}>${item.sub}</div>
@@ -1026,7 +1060,146 @@
       }).join('');
     }
 
-    // بەڕێوەبردنی کەرەستە و مەسرەفی کار (حیبر، وەرەقە، دەستحەق)
+    let isDragging = false;
+
+    function handleDragStart(e) {
+      isDragging = true;
+      draggedCardKey = e.currentTarget.getAttribute('data-key');
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedCardKey);
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const card = e.currentTarget;
+      if (card.getAttribute('data-key') !== draggedCardKey) {
+        card.classList.add('drag-over');
+      }
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const dropTarget = e.currentTarget;
+      dropTarget.classList.remove('drag-over');
+      document.querySelectorAll('.color-card').forEach(c => c.classList.remove('dragging', 'drag-over'));
+      
+      const targetKey = dropTarget.getAttribute('data-key');
+      if (draggedCardKey && targetKey && draggedCardKey !== targetKey) {
+        const fromIdx = cardOrder.indexOf(draggedCardKey);
+        const toIdx = cardOrder.indexOf(targetKey);
+        if (fromIdx !== -1 && toIdx !== -1) {
+          cardOrder.splice(fromIdx, 1);
+          cardOrder.splice(toIdx, 0, draggedCardKey);
+          syncToCloud();
+          showToast('شوێنی کارتەکان پاشەکەوت کرا', '✨');
+        }
+      }
+      setTimeout(() => { isDragging = false; }, 100);
+    }
+
+    function handleCardClick(key, e) {
+      if (isDragging) return;
+      const item = cardDefinitions[key];
+      if (item && item.onClick) {
+        eval(item.onClick);
+      }
+    }
+
+    // لۆگ و مێژوو
+    function renderLogs() {
+      const tbody = document.getElementById('logsTableBody');
+      tbody.innerHTML = activityLogs.map(l => `
+        <tr>
+          <td><strong>${l.user}</strong></td>
+          <td><span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#e0e7ff; color:var(--c-purple); font-weight:bold;">${l.type}</span></td>
+          <td>${l.desc}</td>
+          <td><small style="color:var(--text-muted);">${l.time}</small></td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" style="text-align:center;">هیچ جووڵەیەک تۆمار نەکراوە</td></tr>';
+    }
+
+    function clearLogs() {
+      if(confirm('تەواوی لۆگەکان پاک بکرێنەوە؟')) {
+        activityLogs = [];
+        syncToCloud();
+        showToast('لۆگەکان پاککرانەوە', '🗑️');
+      }
+    }
+
+    // تەنەکەی خۆڵ: بە سڕینەوەی دانە بە دانە
+    function moveToTrash(type, item, title) {
+      trash.unshift({
+        trashId: Date.now(),
+        type, 
+        originalItem: item, 
+        title,
+        deletedBy: currentUser || 'بەکارهێنەر',
+        deletedAt: new Date().toLocaleDateString('ku-IQ')
+      });
+      logAction('سڕینەوە بۆ تەنەکەی خۆڵ', `بابەتی [${title}] لە جۆری [${type}] سڕدرایەوە`);
+      syncToCloud();
+      showToast(`[${title}] برایە تەنەکەی خۆڵ`, '🗑️');
+    }
+
+    function restoreFromTrash(trashId) {
+      const idx = trash.findIndex(t => t.trashId === trashId);
+      if (idx === -1) return;
+      const t = trash[idx];
+      if (t.type === 'داواکاری') orders.unshift(t.originalItem);
+      if (t.type === 'دارایی') finances.unshift(t.originalItem);
+      if (t.type === 'ئامێر') assets.unshift(t.originalItem);
+      logAction('گەڕاندنەوە لە خۆڵ', `بابەتی [${t.title}] گەڕێندرایەوە`);
+      trash.splice(idx, 1);
+      syncToCloud();
+      showToast(`[${t.title}] گەڕێندرایەوە`, '↩');
+    }
+
+    function deletePermanently(trashId) {
+      const idx = trash.findIndex(t => t.trashId === trashId);
+      if (idx === -1) return;
+      const itemTitle = trash[idx].title;
+      if (confirm(`ئایا دڵنیایت لە سڕینەوەی یەکجاریی [${itemTitle}]؟ چیتر ناگەڕێتەوە!`)) {
+        trash.splice(idx, 1);
+        logAction('سڕینەوەی یەکجاری', `بابەتی [${itemTitle}] بە یەکجاری سڕدرایەوە`);
+        syncToCloud();
+        showToast(`[${itemTitle}] بە یەکجاری سڕایەوە`, '❌');
+      }
+    }
+
+    function emptyTrash() {
+      if(confirm('تەنەکەی خۆڵ بە تەواوی و یەکجاری بەتاڵ بکرێتەوە؟')) {
+        trash = [];
+        logAction('بەتاڵکردنی خۆڵ', 'تەواوی تەنەکەی خۆڵ بە یەکجاری بەتاڵ کرا');
+        syncToCloud();
+        showToast('تەنەکەی خۆڵ بەتاڵ کرا', '🗑️');
+      }
+    }
+
+    function renderTrash() {
+      document.getElementById('trashCount').innerText = trash.length;
+      document.getElementById('trashTableBody').innerHTML = trash.map(t => `
+        <tr>
+          <td><strong style="color:var(--c-purple);">${t.type}</strong></td>
+          <td>${t.title}</td>
+          <td>${t.deletedBy}</td>
+          <td>${t.deletedAt || '---'}</td>
+          <td>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-sm btn-success" onclick="restoreFromTrash(${t.trashId})">↩ گەڕاندنەوە</button>
+              <button class="btn btn-sm btn-danger" onclick="deletePermanently(${t.trashId})">سڕینەوەی یەکجاری</button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" style="text-align:center;">بەتاڵە</td></tr>';
+    }
+
+    // مەسرەفی کار (حیبر، وەرەقە...)
     function openNewCategoryModal() {
       document.getElementById('catNameInput').value = '';
       document.getElementById('newCategoryModal').style.display = 'flex';
@@ -1037,7 +1210,9 @@
       if (!name) return;
       if (!workCategories.includes(name)) {
         workCategories.push(name);
+        logAction('زیادکردنی کەرەستە', `جۆری مەسرەفی [${name}] دروستکرا`);
         syncToCloud();
+        showToast(`جۆری [${name}] زیادکرا`, '✅');
       }
       document.getElementById('newCategoryModal').style.display = 'none';
     }
@@ -1061,15 +1236,20 @@
       workExpenses.unshift({
         id: Date.now(), category, desc: desc || category, amount, date, user: currentUser
       });
+      logAction('خەرجی کار', `بڕی ${amount.toLocaleString()} IQD بۆ [${desc || category}] لە بەشی [${category}] تۆمارکرا`);
       document.getElementById('addExpenseEntryModal').style.display = 'none';
       syncToCloud();
+      showToast('خەرجی پاشەکەوت کرا', '💰');
     }
 
     function deleteWorkExpenseItem(id) {
       const idx = workExpenses.findIndex(x => x.id === id);
       if (idx !== -1) {
+        const item = workExpenses[idx];
         workExpenses.splice(idx, 1);
+        logAction('سڕینەوەی مەسرەف', `خەرجی [${item.desc}] سڕدرایەوە`);
         syncToCloud();
+        showToast('خەرجی سڕایەوە', '🗑️');
       }
     }
 
@@ -1102,47 +1282,6 @@
           </div>
         </div>`;
       }).join('');
-    }
-
-    // تەنەکەی خۆڵ
-    function moveToTrash(type, item, title) {
-      trash.unshift({
-        trashId: Date.now(),
-        type, originalItem: item, title,
-        deletedBy: currentUser,
-        deletedAt: new Date().toLocaleDateString('ku-IQ')
-      });
-      syncToCloud();
-    }
-
-    function restoreFromTrash(trashId) {
-      const idx = trash.findIndex(t => t.trashId === trashId);
-      if (idx === -1) return;
-      const t = trash[idx];
-      if (t.type === 'داواکاری') orders.unshift(t.originalItem);
-      if (t.type === 'دارایی') finances.unshift(t.originalItem);
-      if (t.type === 'ئامێر') assets.unshift(t.originalItem);
-      trash.splice(idx, 1);
-      syncToCloud();
-    }
-
-    function emptyTrash() {
-      if(confirm('تەنەکەی خۆڵ بە یەکجاری بەتاڵ بکرێتەوە؟')) {
-        trash = [];
-        syncToCloud();
-      }
-    }
-
-    function renderTrash() {
-      document.getElementById('trashCount').innerText = trash.length;
-      document.getElementById('trashTableBody').innerHTML = trash.map(t => `
-        <tr>
-          <td><strong style="color:var(--c-purple);">${t.type}</strong></td>
-          <td>${t.title}</td>
-          <td>${t.deletedBy}</td>
-          <td><button class="btn btn-sm btn-success" onclick="restoreFromTrash(${t.trashId})">گەڕاندنەوە ↩</button></td>
-        </tr>
-      `).join('') || '<tr><td colspan="4" style="text-align:center;">بەتاڵە</td></tr>';
     }
 
     function handleImageUpload(e) {
@@ -1264,6 +1403,7 @@
         o.payment = payment;
         o.notes = notes; o.bookType = bookType; o.selectedPages = selectedPages;
         o.images = currentImages;
+        logAction('دەستکاری داواکاری', `داواکاری [${name}] نوێکرایەوە`);
       } else {
         orders.unshift({
           id: Date.now(), name, phone, orderDate, address, childInfo, 
@@ -1272,10 +1412,12 @@
           selectedPages, images: currentImages, completed: false,
           stages: { data: false, design: false, print: false, ready: false, sent: false }
         });
+        logAction('داواکاری نوێ', `داواکاری نوێ بۆ [${name}] بە بڕی ${price.toLocaleString()} IQD تۆمارکرا`);
       }
 
       closeOrderModal();
       syncToCloud();
+      showToast('داواکاری پاشەکەوت کرا', '📦');
     }
 
     function deleteOrder(id) {
@@ -1289,14 +1431,21 @@
 
     function toggleStage(id, stg) {
       const o = orders.find(x => x.id === id);
-      if(o) { o.stages[stg] = !o.stages[stg]; syncToCloud(); }
+      if(o) { 
+        o.stages[stg] = !o.stages[stg]; 
+        logAction('گۆڕینی قۆناغ', `قۆناغی [${stg}] بۆ داواکاری [${o.name}] گۆڕدرا بۆ: ${o.stages[stg] ? 'تەواو' : 'ناتەواو'}`);
+        syncToCloud(); 
+        showToast('قۆناغ نوێکرایەوە', '🔄');
+      }
     }
 
     function markAsCompleted(id) {
       const o = orders.find(x => x.id === id);
       if(o) {
         o.completed = true;
+        logAction('تەواوکردنی داواکاری', `داواکاری [${o.name}] بردرایە ئەرشیفی تەواوبووەکان`);
         syncToCloud();
+        showToast(`داواکاری [${o.name}] تەواو کرا`, '✅');
       }
     }
 
@@ -1357,7 +1506,7 @@
           <td>${(o.price || 0).toLocaleString()}</td>
           <td>${delFee.toLocaleString()} <small style="color:var(--c-green);">(خێر: ${delProf.toLocaleString()})</small></td>
           <td>
-            <button class="btn btn-sm btn-warning" onclick="orders.find(x=>x.id===${o.id}).completed=false;syncToCloud();">چالاککردنەوە</button>
+            <button class="btn btn-sm btn-warning" onclick="orders.find(x=>x.id===${o.id}).completed=false;syncToCloud();showToast('چالاککرایەوە','🔄');">چالاککردنەوە</button>
             <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">سڕینەوە</button>
           </td>
         </tr>`;
@@ -1393,7 +1542,13 @@
 
     function addBookType() {
       const v = document.getElementById('newBookInput').value.trim();
-      if(v) { bookTypes.push(v); document.getElementById('newBookInput').value=''; syncToCloud(); }
+      if(v) { 
+        bookTypes.push(v); 
+        document.getElementById('newBookInput').value=''; 
+        logAction('جۆری کتێب', `جۆری نوێ [${v}] زیادکرا`);
+        syncToCloud(); 
+        showToast('جۆری کتێب زیادکرا', '📑');
+      }
     }
     function editBookType(i) {
       const u = prompt('دەستکاری ناوی کتێب:', bookTypes[i]);
@@ -1407,7 +1562,13 @@
 
     function addPageType() {
       const v = document.getElementById('newPageInput').value.trim();
-      if(v) { pageTypes.push(v); document.getElementById('newPageInput').value=''; syncToCloud(); }
+      if(v) { 
+        pageTypes.push(v); 
+        document.getElementById('newPageInput').value=''; 
+        logAction('نەوعیەتی پەڕە', `پەڕەی نوێ [${v}] زیادکرا`);
+        syncToCloud(); 
+        showToast('پەڕە زیادکرا', '📄');
+      }
     }
     function editPageType(i) {
       const u = prompt('دەستکاری ناوی پەڕە:', pageTypes[i]);
@@ -1468,11 +1629,14 @@
       if(id) {
         const f = finances.find(x => x.id == id);
         f.title = title; f.type = type; f.amount = amount; f.method = method;
+        logAction('دەستکاری دارایی', `تۆماری [${title}] نوێکرایەوە`);
       } else {
         finances.unshift({ id: Date.now(), title, type, amount, method, date: new Date().toISOString().split('T')[0] });
+        logAction('دارایی نوێ', `تۆماری دارایی [${title}] بە بڕی ${amount.toLocaleString()} IQD دانرا`);
       }
       closeFinanceModal();
       syncToCloud();
+      showToast('دارایی پاشەکەوت کرا', '💰');
     }
     function deleteFinance(id) {
       const idx = finances.findIndex(x => x.id === id);
@@ -1527,11 +1691,14 @@
       if(id) {
         const a = assets.find(x => x.id == id);
         a.name = name; a.price = price; a.cond = cond;
+        logAction('دەستکاری ئامێر', `ئامێری [${name}] نوێکرایەوە`);
       } else {
         assets.unshift({ id: Date.now(), name, price, cond });
+        logAction('ئامێری نوێ', `ئامێری [${name}] بە نرخی ${price.toLocaleString()} IQD تۆمارکرا`);
       }
       closeAssetModal();
       syncToCloud();
+      showToast('ئامێر پاشەکەوت کرا', '🖥️');
     }
     function deleteAsset(id) {
       const idx = assets.findIndex(x => x.id === id);
@@ -1557,7 +1724,6 @@
       `).join('') || '<tr><td colspan="4" style="text-align:center;">هیچ ئامێرێک نییە</td></tr>';
     }
 
-    // ژماردنی ئامارەکان بەپێی فلتەری کات
     function calculateStats() {
       const filterMode = document.getElementById('timeFilterSelect').value;
       const now = new Date();
@@ -1640,7 +1806,6 @@
       setEl('dExpenseTotal', allExpenses.toLocaleString() + ' IQD');
       setEl('dAvgOrder', avgOrder.toLocaleString() + ' IQD');
 
-      // داتای باڕەکانی ۱۲ مانگ
       const monthlyTotals = new Array(12).fill(0);
       orders.forEach(o => {
         const d = o.orderDate ? new Date(o.orderDate) : new Date(o.id);
@@ -1658,7 +1823,7 @@
         const h = Math.max((val / maxVal) * 115, 6);
         const isCurrent = (idx + 1) === curM;
         return `
-        <div class="bar-col" title="کلیک بکە بۆ فلتەرکردنی ئەم مانگە" onclick="document.getElementById('timeFilterSelect').value='${isCurrent?'this_month':'all'}'; calculateStats();">
+        <div class="bar-col" title="مانگی ${idx + 1}" onclick="document.getElementById('timeFilterSelect').value='${isCurrent?'this_month':'all'}'; calculateStats();">
           <span style="font-size:9px; color:var(--text-muted); font-weight:bold;">${val > 0 ? (val/1000).toFixed(0)+'k' : ''}</span>
           <div class="bar-stick" style="height:${h}px; background:${isCurrent ? 'var(--c-purple)' : 'var(--c-blue)'};"></div>
           <span class="bar-label">${idx + 1}</span>
