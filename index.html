@@ -55,7 +55,7 @@
     header {
       background: #ffffff;
       border-bottom: 1px solid var(--border);
-      padding: 0.6rem 1rem;
+      padding: 0.5rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -64,9 +64,11 @@
       z-index: 100;
     }
 
+    /* شریتی سەرەوە بە ئایکۆن و دەرکەوتنی دەق بە ماوس (Hover Expand) */
     .top-nav {
       display: flex;
-      gap: 0.4rem;
+      gap: 0.35rem;
+      align-items: center;
       overflow-x: auto;
       padding-bottom: 4px;
       scrollbar-width: none;
@@ -76,13 +78,23 @@
     .nav-pill {
       background: #fff;
       border: 1px solid var(--border);
-      padding: 0.45rem 0.85rem;
+      padding: 0.45rem 0.65rem;
       border-radius: 20px;
       cursor: pointer;
       font-size: 13px;
       font-weight: bold;
       white-space: nowrap;
-      transition: all 0.2s;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      max-width: 42px;
+      overflow: hidden;
+    }
+
+    .nav-pill:hover, .nav-pill.active {
+      max-width: 220px;
+      padding: 0.45rem 0.95rem;
     }
 
     .nav-pill.active {
@@ -96,6 +108,14 @@
       border-color: var(--c-red);
     }
 
+    .nav-pill .nav-label {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .nav-pill:hover .nav-label, .nav-pill.active .nav-label {
+      opacity: 1;
+    }
+
     .user-badge {
       background: #f1f5f9;
       padding: 0.35rem 0.7rem;
@@ -105,23 +125,33 @@
       white-space: nowrap;
     }
 
-    /* دوگمەی نۆتیفیکەیشن */
-    .notif-btn-wrapper {
+    /* ئایکۆنی نۆتیفیکەیشن و نۆتەکان */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .icon-btn-wrapper {
       position: relative;
       cursor: pointer;
     }
-    .notif-bell-icon {
+
+    .circle-icon-btn {
       background: #f1f5f9;
       border: 1px solid var(--border);
       border-radius: 50%;
-      width: 34px;
-      height: 34px;
+      width: 35px;
+      height: 35px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      font-size: 16px;
+      transition: background 0.15s ease;
     }
-    .notif-badge-count {
+    .circle-icon-btn:hover { background: #e2e8f0; }
+
+    .badge-count {
       position: absolute;
       top: -3px;
       right: -3px;
@@ -137,20 +167,20 @@
       justify-content: center;
     }
 
-    .notif-dropdown {
+    .pop-dropdown {
       display: none;
       position: absolute;
       left: 0;
-      top: 42px;
+      top: 44px;
       background: #fff;
       border: 1px solid var(--border);
       border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-      width: 280px;
-      max-height: 350px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      width: 320px;
+      max-height: 420px;
       overflow-y: auto;
       z-index: 200;
-      padding: 0.6rem;
+      padding: 0.8rem;
     }
 
     .container {
@@ -185,7 +215,7 @@
       display: flex;
       align-items: flex-end;
       gap: 8px;
-      height: 150px;
+      height: 140px;
       padding-top: 15px;
       border-bottom: 2px solid var(--border);
       overflow-x: auto;
@@ -347,7 +377,6 @@
       .grid-2 { grid-template-columns: 1fr; }
     }
 
-    /* ستایلی Drag & Drop ی جۆرەکان و پەڕەکان */
     .sortable-item {
       display: flex;
       justify-content: space-between;
@@ -444,11 +473,30 @@
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
+
+    /* نۆت و تودو ستایل */
+    .todo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.45rem 0.5rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 0.4rem;
+      border: 1px solid var(--border);
+      font-size: 12.5px;
+      transition: all 0.2s ease;
+    }
+    .todo-item.done {
+      background: #e2e8f0;
+      color: #94a3b8;
+      text-decoration: line-through;
+    }
   </style>
 </head>
 <body>
 
-  <!-- نۆتیفیکەیشنی کاتی -->
+  <!-- نۆتیفیکەیشنی خێرا -->
   <div id="toastNotification">
     <span id="toastIcon">🔔</span>
     <span id="toastMsg">کردارەکە سەرکەوتوو بوو</span>
@@ -478,24 +526,40 @@
   <!-- هێدەر -->
   <header>
     <div class="top-nav">
-      <button class="nav-pill active" onclick="switchTab('dashboardTab')">📊 داشبۆرد و ئینسایت</button>
-      <button class="nav-pill" onclick="switchTab('ordersTab')">📦 داواکارییەکان</button>
-      <button class="nav-pill" onclick="switchTab('workExpensesTab')">🛠️ مەسرەفی کار (حیبر، وەرەقە...)</button>
-      <button class="nav-pill" onclick="switchTab('completedTab')">✅ تەواوبووەکان</button>
-      <button class="nav-pill" onclick="switchTab('settingsTab')">📑 جۆرەکان و پەڕەکان</button>
-      <button class="nav-pill" onclick="switchTab('financeTab')">💰 دارایی و FIB</button>
-      <button class="nav-pill" onclick="switchTab('assetsTab')">🖥️ ئامێرەکان</button>
-      <button class="nav-pill" onclick="switchTab('logsTab')">📜 لۆگ و مێژوو</button>
-      <button class="nav-pill trash-pill" onclick="switchTab('trashTab')">🗑️ تەنەکەی خۆڵ (<span id="trashCount">0</span>)</button>
+      <button class="nav-pill active" onclick="switchTab('dashboardTab')"><span>📊</span><span class="nav-label">داشبۆرد و شیکاری</span></button>
+      <button class="nav-pill" onclick="switchTab('ordersTab')"><span>📦</span><span class="nav-label">داواکارییەکان</span></button>
+      <button class="nav-pill" onclick="switchTab('workExpensesTab')"><span>🛠️</span><span class="nav-label">مەسرەفی کار (حیبر...)</span></button>
+      <button class="nav-pill" onclick="switchTab('completedTab')"><span>✅</span><span class="nav-label">تەواوبووەکان</span></button>
+      <button class="nav-pill" onclick="switchTab('settingsTab')"><span>📑</span><span class="nav-label">جۆرەکان و پەڕەکان</span></button>
+      <button class="nav-pill" onclick="switchTab('financeTab')"><span>💰</span><span class="nav-label">دارایی و FIB</span></button>
+      <button class="nav-pill" onclick="switchTab('assetsTab')"><span>🖥️</span><span class="nav-label">ئامێرەکان</span></button>
+      <button class="nav-pill" onclick="switchTab('logsTab')"><span>📜</span><span class="nav-label">لۆگ و مێژوو</span></button>
+      <button class="nav-pill trash-pill" onclick="switchTab('trashTab')"><span>🗑️</span><span class="nav-label">تەنەکەی خۆڵ (<span id="trashCount">0</span>)</span></button>
     </div>
     
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <!-- ئایکۆنی نۆتیفیکەیشن و زەنگ لە سەرەوە -->
-      <div class="notif-btn-wrapper" onclick="toggleNotifDropdown(event)">
-        <div class="notif-bell-icon">🔔</div>
-        <div class="notif-badge-count" id="notifBadge">0</div>
-        <div class="notif-dropdown" id="notifDropdown">
-          <strong style="font-size:12px; color:var(--c-purple);">ئاگاداری و نۆتیفیکەیشنەکان:</strong>
+    <div class="header-actions">
+      <!-- بەشی نۆت / تودوولیستی هاوبەش (هەتا هەفتەیەک) -->
+      <div class="icon-btn-wrapper" onclick="toggleNotesDropdown(event)">
+        <div class="circle-icon-btn" title="نۆت و تودوولیستی هاوبەش">📝</div>
+        <div class="badge-count" id="notesBadge" style="background:var(--c-purple);">0</div>
+        <div class="pop-dropdown" id="notesDropdown">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <strong style="font-size:12px; color:var(--c-purple);">📝 نۆت و تودوولیست (هاوبەش بۆ هەفتەیەک):</strong>
+          </div>
+          <div style="display:flex; gap:4px; margin-bottom:0.6rem;">
+            <input type="text" id="newNoteInput" class="form-control" style="font-size:12px; padding:0.4rem;" placeholder="نووسینی نۆتێک یان ئەرکێک...">
+            <button class="btn btn-primary btn-sm" onclick="addSharedNote()">ناردن</button>
+          </div>
+          <div id="notesListContainer"></div>
+        </div>
+      </div>
+
+      <!-- ئایکۆنی نۆتیفیکەیشن و زەنگ -->
+      <div class="icon-btn-wrapper" onclick="toggleNotifDropdown(event)">
+        <div class="circle-icon-btn" title="ئاگادارییەکان">🔔</div>
+        <div class="badge-count" id="notifBadge">0</div>
+        <div class="pop-dropdown" id="notifDropdown">
+          <strong style="font-size:12px; color:var(--c-purple);">ئاگادارییەکان (ئەوانەی ٢٤ سەعاتیان بەسەردا چووە سوور نین):</strong>
           <div id="notifList" style="margin-top:6px; font-size:11.5px; display:flex; flex-direction:column; gap:4px;"></div>
         </div>
       </div>
@@ -506,11 +570,37 @@
   </header>
 
   <div class="container">
-    <!-- داشبۆرد و داتا ئینسایت -->
+    <!-- داشبۆرد و داتا ئەنەلایز -->
     <div id="dashboardTab" class="view-panel">
+      
+      <!-- شیکاری و داتا ئەنەلایزی پڕفرۆشترین بەرهەم و پەڕەکان -->
+      <div class="chart-container" style="background: linear-gradient(to left, #ffffff, #f8fafc); border-right: 4px solid var(--c-purple);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.8rem;">
+          <div>
+            <strong style="font-size:14px; color:var(--c-purple);">🔍 داتا ئەنەلایز (شیکاری وردی فرۆشترین کتێب و پەڕەکان)</strong>
+            <div style="font-size:11.5px; color:var(--text-muted);">بزانە کام بەرهەم و کام پەڕە زۆرترین داواکاری و سەحی لەسەر بووە</div>
+          </div>
+          <input type="text" id="analyticsSearchInput" class="form-control" style="width:230px; font-size:12px; padding:0.4rem 0.6rem;" placeholder="گەڕان لەناو شیکاری بەرهەمەکان..." oninput="calculateStats()">
+        </div>
+
+        <div class="grid-2">
+          <!-- پڕفرۆشترین جۆری کتێبەکان -->
+          <div style="background:#fff; padding:0.8rem; border-radius:10px; border:1px solid var(--border);">
+            <strong style="font-size:12px; color:var(--c-purple);">🏆 پڕفرۆشترین جۆری کتێبەکان لەم مانگەدا:</strong>
+            <div id="topBooksAnalyticsList" style="margin-top:6px; display:flex; flex-direction:column; gap:4px; max-height:120px; overflow-y:auto;"></div>
+          </div>
+
+          <!-- پڕداواکراوترین پەڕەکان (سەحلێدراوەکان) -->
+          <div style="background:#fff; padding:0.8rem; border-radius:10px; border:1px solid var(--border);">
+            <strong style="font-size:12px; color:var(--c-green);">⭐ ئەو پەڕانەی لە هەمووی زیاتر سەحیان لێدراوە:</strong>
+            <div id="topPagesAnalyticsList" style="margin-top:6px; display:flex; flex-direction:column; gap:4px; max-height:120px; overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="filter-bar">
         <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
-          <strong style="color:var(--c-purple); font-size:14px;">📅 داتا ئینسایت (دیاریکردنی کات):</strong>
+          <strong style="color:var(--c-purple); font-size:14px;">📅 دیاریکردنی کات:</strong>
           <select id="timeFilterSelect" class="form-control" style="width:170px; font-weight:bold; color:var(--c-purple);" onchange="calculateStats()">
             <option value="all">کۆی گشتی (هەموو کاتێک)</option>
             <option value="this_month" selected>ئەم مانگە (مانگی ئێستا)</option>
@@ -519,7 +609,7 @@
           </select>
         </div>
         <div style="font-size:12px; color:var(--text-muted);">
-          💡 دەتوانیت کارتەکان بە ماوس یان پەنجە بە ئاسۆیی و ستوونی ڕابکێشیت بۆ گۆڕینی شوێنیان.
+          💡 کارتەکان بە ماوس یان پەنجە ڕابکێشە بۆ گۆڕینی شوێنەکانیان.
         </div>
       </div>
 
@@ -595,20 +685,15 @@
       </div>
     </div>
 
-    <!-- جۆرەکان و نەوعیەتی پەڕەکان (بە سێرچ و Drag & Drop) -->
+    <!-- جۆرەکان و نەوعیەتی پەڕەکان -->
     <div id="settingsTab" class="view-panel" style="display: none;">
       <div class="grid-2">
-        
-        <!-- جۆرەکانی کتێب -->
         <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
             <h4>جۆرەکانی داواکاری / کتێب</h4>
             <span style="font-size:11px; color:var(--text-muted);">💡 بە دەست و ماوس ڕایبکێشە بۆ سەروو خوار</span>
           </div>
-
-          <!-- خانەی سێرچ -->
           <input type="text" id="searchBookTypeInput" class="form-control" style="margin-bottom:0.6rem; padding:0.4rem 0.6rem; font-size:12.5px;" placeholder="🔍 سێرچ بکە لەناو جۆرەکانی کتێب..." oninput="renderSettings()">
-
           <div style="display:flex; gap:0.4rem; margin-bottom:0.8rem;">
             <input type="text" id="newBookInput" class="form-control" placeholder="ناوی جۆرێکی نوێ...">
             <button class="btn btn-primary btn-sm" onclick="addBookType()">زیادکردن</button>
@@ -616,23 +701,18 @@
           <div id="bookTypesContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
         </div>
 
-        <!-- نەوعیەتی پەڕەکان -->
         <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
             <h4>نەوعیەتی پەڕەکان و ئاستەکان</h4>
             <span style="font-size:11px; color:var(--text-muted);">💡 بە دەست و ماوس ڕایبکێشە بۆ سەروو خوار</span>
           </div>
-
-          <!-- خانەی سێرچ -->
           <input type="text" id="searchPageTypeInput" class="form-control" style="margin-bottom:0.6rem; padding:0.4rem 0.6rem; font-size:12.5px;" placeholder="🔍 سێرچ بکە لەناو نەوعیەتی پەڕەکان..." oninput="renderSettings()">
-
           <div style="display:flex; gap:0.4rem; margin-bottom:0.8rem;">
             <input type="text" id="newPageInput" class="form-control" placeholder="ناوی پەڕەیەکی نوێ...">
             <button class="btn btn-primary btn-sm" onclick="addPageType()">زیادکردن</button>
           </div>
           <div id="pageTypesContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
         </div>
-
       </div>
     </div>
 
@@ -680,10 +760,10 @@
       </div>
     </div>
 
-    <!-- لۆگ و مێژوو -->
+    <!-- لۆگ و مێژوو بە لینکی ڕاستەوخۆ -->
     <div id="logsTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
-        <h3>📜 تۆماری جووڵە و مێژوو (Activity Logs)</h3>
+        <h3>📜 تۆماری جووڵە و مێژوو (Activity Logs) - کلیک لە هەر دێڕێک بکە دەتباتە سەر شوێنەکە</h3>
         <button class="btn btn-secondary btn-sm" onclick="clearLogs()">پاککردنەوەی لۆگەکان</button>
       </div>
       <div class="table-card">
@@ -694,6 +774,7 @@
               <th>جۆری جووڵە</th>
               <th>وەسف و وردەکاری</th>
               <th>کات و بەروار</th>
+              <th>کردار</th>
             </tr>
           </thead>
           <tbody id="logsTableBody"></tbody>
@@ -724,7 +805,7 @@
     </div>
   </div>
 
-  <!-- مۆداڵی داواکاری -->
+  <!-- مۆداڵی داواکاری (بە بژاردەی کەستم بۆ جۆری کتێب) -->
   <div id="orderModal" class="modal">
     <div class="modal-box">
       <h3 id="orderModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">داواکاری</h3>
@@ -756,7 +837,9 @@
         </div>
         <div>
           <label style="font-size:12px; font-weight:bold;">جۆری کتێب:</label>
-          <select id="mBookTypeSelect" class="form-control"></select>
+          <select id="mBookTypeSelect" class="form-control" onchange="toggleCustomBookType(this.value)"></select>
+          <!-- خانەی نووسینی جۆری تر (کەستم) -->
+          <input type="text" id="mCustomBookInput" class="form-control" placeholder="ناوی جۆری کتێبەکە بنووسە..." style="display:none; margin-top:4px; border-color:var(--c-purple);">
         </div>
       </div>
       <div class="grid-2" style="margin-top:0.4rem; background: #eef2ff; padding: 0.6rem; border-radius: 8px; border: 1px dashed var(--c-purple);">
@@ -817,7 +900,7 @@
     </div>
   </div>
 
-  <!-- مۆداڵی کڕینی نوێ -->
+  <!-- مۆداڵی کڕینی نوێ لە مەسرەف -->
   <div id="addExpenseEntryModal" class="modal">
     <div class="modal-box" style="max-width:400px;">
       <h3 style="margin-bottom:0.8rem; color:var(--c-purple);">تۆمارکردنی خەرجی</h3>
@@ -961,12 +1044,22 @@
     function toggleNotifDropdown(e) {
       e.stopPropagation();
       const dd = document.getElementById('notifDropdown');
+      document.getElementById('notesDropdown').style.display = 'none';
+      dd.style.display = (dd.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function toggleNotesDropdown(e) {
+      e.stopPropagation();
+      const dd = document.getElementById('notesDropdown');
+      document.getElementById('notifDropdown').style.display = 'none';
       dd.style.display = (dd.style.display === 'block') ? 'none' : 'block';
     }
 
     document.addEventListener('click', () => {
-      const dd = document.getElementById('notifDropdown');
-      if(dd) dd.style.display = 'none';
+      const nDd = document.getElementById('notifDropdown');
+      const tDd = document.getElementById('notesDropdown');
+      if(nDd) nDd.style.display = 'none';
+      if(tDd) tDd.style.display = 'none';
     });
 
     const firebaseConfig = {
@@ -988,6 +1081,7 @@
     let assets = [];
     let trash = [];
     let activityLogs = [];
+    let sharedNotes = []; // نۆت و تودوولیستی هاوبەش بۆ ماوەی هەفتەیەک
     let workCategories = ["حیبر", "وەرەقە و لامینەیت", "فریلانسەر و حەقی دەست"];
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
@@ -1011,12 +1105,13 @@
       card_avg: { title: "ناوەندی نرخی هەر تەڵەبێک 📈", bg: "bg-purple", idVal: "dAvgOrder", sub: "IQD", onClick: null }
     };
 
-    function logAction(type, desc) {
+    function logAction(type, desc, targetTab = 'dashboardTab') {
       activityLogs.unshift({
         id: Date.now(),
         user: currentUser || 'بەکارهێنەر',
         type,
         desc,
+        targetTab,
         time: new Date().toLocaleString('ku-IQ')
       });
       if (activityLogs.length > 200) activityLogs.pop();
@@ -1031,6 +1126,7 @@
           assets = JSON.parse(localStorage.getItem('th_assets') || '[]');
           trash = JSON.parse(localStorage.getItem('th_trash') || '[]');
           activityLogs = JSON.parse(localStorage.getItem('th_activity_logs') || '[]');
+          sharedNotes = JSON.parse(localStorage.getItem('th_shared_notes') || '[]');
           workCategories = JSON.parse(localStorage.getItem('th_work_categories') || JSON.stringify(workCategories));
           workExpenses = JSON.parse(localStorage.getItem('th_work_expenses') || '[]');
           bookTypes = JSON.parse(localStorage.getItem('th_book_types') || JSON.stringify(bookTypes));
@@ -1048,6 +1144,7 @@
           assets = val.assets || [];
           trash = val.trash || [];
           activityLogs = val.activityLogs || [];
+          sharedNotes = val.sharedNotes || [];
           workCategories = val.workCategories || workCategories;
           workExpenses = val.workExpenses || [];
           bookTypes = val.bookTypes || bookTypes;
@@ -1059,6 +1156,7 @@
           localStorage.setItem('th_assets', JSON.stringify(assets));
           localStorage.setItem('th_trash', JSON.stringify(trash));
           localStorage.setItem('th_activity_logs', JSON.stringify(activityLogs));
+          localStorage.setItem('th_shared_notes', JSON.stringify(sharedNotes));
           localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
           localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
           localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
@@ -1076,6 +1174,7 @@
       localStorage.setItem('th_assets', JSON.stringify(assets));
       localStorage.setItem('th_trash', JSON.stringify(trash));
       localStorage.setItem('th_activity_logs', JSON.stringify(activityLogs));
+      localStorage.setItem('th_shared_notes', JSON.stringify(sharedNotes));
       localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
       localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
       localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
@@ -1084,31 +1183,101 @@
       refreshAllUI();
 
       db.ref('tinyhands_data').set({
-        orders, finances, assets, trash, activityLogs, workCategories, workExpenses, bookTypes, pageTypes, cardOrder
+        orders, finances, assets, trash, activityLogs, sharedNotes, workCategories, workExpenses, bookTypes, pageTypes, cardOrder
       });
     }
 
+    // بەشی نۆت و تودوولیستی هاوبەش (سڕینەوەی ئۆتۆماتیکی دوای ۷ ڕۆژ)
+    function addSharedNote() {
+      const input = document.getElementById('newNoteInput');
+      const text = input.value.trim();
+      if (!text) return;
+      sharedNotes.unshift({
+        id: Date.now(),
+        text,
+        user: currentUser || 'بەکارهێنەر',
+        done: false,
+        createdAt: Date.now()
+      });
+      input.value = '';
+      logAction('نۆتی هاوبەش', `نۆتی نوێ نوسرا: ${text}`);
+      syncToCloud();
+      showToast('نۆتەکە پاشەکەوت کرا', '📝');
+    }
+
+    function toggleNoteDone(id) {
+      const n = sharedNotes.find(x => x.id === id);
+      if (n) {
+        n.done = !n.done;
+        syncToCloud();
+      }
+    }
+
+    function deleteNoteItem(id) {
+      const idx = sharedNotes.findIndex(x => x.id === id);
+      if (idx !== -1) {
+        sharedNotes.splice(idx, 1);
+        syncToCloud();
+        showToast('نۆتەکە سڕایەوە', '🗑️');
+      }
+    }
+
+    function renderSharedNotes() {
+      const now = Date.now();
+      const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+      // سڕینەوەی ئەوانەی زیاتر لە ٧ ڕۆژە ماونەتەوە
+      sharedNotes = sharedNotes.filter(n => (now - n.createdAt) <= ONE_WEEK_MS);
+
+      const activeNotesCount = sharedNotes.filter(n => !n.done).length;
+      document.getElementById('notesBadge').innerText = activeNotesCount;
+
+      const container = document.getElementById('notesListContainer');
+      container.innerHTML = sharedNotes.map(n => `
+        <div class="todo-item ${n.done ? 'done' : ''}">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" ${n.done ? 'checked' : ''} onchange="toggleNoteDone(${n.id})" style="cursor:pointer;">
+            <span>${n.text} <small style="font-size:10px; opacity:0.75;">(${n.user})</small></span>
+          </div>
+          <span style="color:red; cursor:pointer; font-weight:bold; font-size:13px;" onclick="deleteNoteItem(${n.id})" title="سڕینەوە">×</span>
+        </div>
+      `).join('') || '<div style="font-size:11px; color:#94a3b8; text-align:center; padding:10px 0;">هیچ نۆت و تودوویەک نییە</div>';
+    }
+
+    // نۆتیفیکەیشن و کاتی ٢٤ کاتژمێر
     function updateNotifications() {
+      const now = Date.now();
+      const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
       const unpaids = orders.filter(o => o.payment === 'unpaid');
       const inProgress = orders.filter(o => !o.completed);
-      const totalAlerts = unpaids.length;
 
-      document.getElementById('notifBadge').innerText = totalAlerts;
+      // ئەوانەی لە ٢٤ سەعاتی ڕابردوودا دروستکراون سوور دەمێننەوە
+      const freshUnpaids = unpaids.filter(o => (now - o.id) < TWENTY_FOUR_HOURS_MS);
+      document.getElementById('notifBadge').innerText = freshUnpaids.length;
+
       const list = document.getElementById('notifList');
-      if (totalAlerts === 0 && inProgress.length === 0) {
+      if (unpaids.length === 0 && inProgress.length === 0) {
         list.innerHTML = '<span style="color:var(--text-muted);">هیچ ئاگادارییەکی نوێ نییە</span>';
         return;
       }
 
       let html = '';
       if (unpaids.length > 0) {
-        html += `<div style="color:var(--c-red); font-weight:bold;">⚠️ ${unpaids.length} داواکاری پارەی نەدراوە</div>`;
-        unpaids.slice(0, 4).forEach(u => {
-          html += `<div style="background:#fff1f2; padding:3px 6px; border-radius:5px; font-size:11px;">کڕیار: ${u.name} (${u.price.toLocaleString()} IQD)</div>`;
+        html += `<div style="color:var(--c-purple); font-weight:bold; margin-bottom:2px;">داواکارییە قەرزەکان (کلیک بکە بۆ بینینیان):</div>`;
+        unpaids.forEach(u => {
+          const isFresh = (now - u.id) < TWENTY_FOUR_HOURS_MS;
+          html += `
+          <div style="background:${isFresh ? '#fee2e2' : '#f1f5f9'}; color:${isFresh ? '#b91c1c' : '#334155'}; padding:4px 6px; border-radius:6px; font-size:11px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="switchTab('ordersTab'); document.getElementById('orderSearch').value='${u.name}'; renderOrders();">
+            <span>👤 ${u.name} - ${u.price.toLocaleString()} IQD</span>
+            <small style="font-weight:bold;">${isFresh ? '🔴 نوێیە' : '⚪ پێشتر'}</small>
+          </div>`;
         });
       }
       if (inProgress.length > 0) {
-        html += `<div style="color:var(--c-blue); font-weight:bold; margin-top:4px;">📦 ${inProgress.length} داواکاری چالاک لە قۆناغدان</div>`;
+        html += `
+        <div style="color:var(--c-blue); font-weight:bold; margin-top:6px; cursor:pointer;" onclick="switchTab('ordersTab')">
+          📦 ${inProgress.length} داواکاری لە قۆناغی کاردان (کلیک بکە)
+        </div>`;
       }
       list.innerHTML = html;
     }
@@ -1123,6 +1292,7 @@
       renderWorkExpenses();
       renderTrash();
       renderLogs();
+      renderSharedNotes();
       calculateStats();
       updateNotifications();
     }
@@ -1135,7 +1305,7 @@
         localStorage.setItem('th_user', user);
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('currentUserName').innerText = currentUser;
-        logAction('چوونەژوورەوە', `بەکارهێنەر ${user} چووە ژوورەوە`);
+        logAction('چوونەژوورەوە', `بەکارهێنەر ${user} چووە ژوورەوە`, 'dashboardTab');
         showToast(`بەخێربێیت ${user}`, '👋');
         syncFromCloud();
       } else {
@@ -1144,7 +1314,7 @@
     }
 
     function logout() {
-      logAction('دەرچوون', `بەکارهێنەر ${currentUser} دەرچوو`);
+      logAction('دەرچوون', `بەکارهێنەر ${currentUser} دەرچوو`, 'dashboardTab');
       localStorage.removeItem('th_user');
       location.reload();
     }
@@ -1323,17 +1493,18 @@
       }).join('') || '<div style="padding:10px; text-align:center; color:#94a3b8; font-size:12px;">هیچ پەڕەیەک نەدۆزرایەوە</div>';
     }
 
-    // لۆگ و مێژوو
+    // لۆگ و مێژوو بە پەیوەستکردنی ڕاستەوخۆ بە شوێنی کارەکان
     function renderLogs() {
       const tbody = document.getElementById('logsTableBody');
       tbody.innerHTML = activityLogs.map(l => `
-        <tr>
+        <tr style="cursor:pointer;" onclick="switchTab('${l.targetTab || 'dashboardTab'}')" title="کلیک بکە بۆ چوونە سەر ئەم بەشە">
           <td><strong>${l.user}</strong></td>
           <td><span style="font-size:11px; padding:2px 6px; border-radius:6px; background:#e0e7ff; color:var(--c-purple); font-weight:bold;">${l.type}</span></td>
           <td>${l.desc}</td>
           <td><small style="color:var(--text-muted);">${l.time}</small></td>
+          <td><button class="btn btn-sm btn-secondary">بینین ↗</button></td>
         </tr>
-      `).join('') || '<tr><td colspan="4" style="text-align:center;">هیچ جووڵەیەک تۆمار نەکراوە</td></tr>';
+      `).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ جووڵەیەک تۆمار نەکراوە</td></tr>';
     }
 
     function clearLogs() {
@@ -1354,7 +1525,7 @@
         deletedBy: currentUser || 'بەکارهێنەر',
         deletedAt: new Date().toLocaleDateString('ku-IQ')
       });
-      logAction('سڕینەوە بۆ تەنەکەی خۆڵ', `بابەتی [${title}] لە جۆری [${type}] سڕدرایەوە`);
+      logAction('سڕینەوە بۆ تەنەکەی خۆڵ', `بابەتی [${title}] لە جۆری [${type}] سڕدرایەوە`, 'trashTab');
       syncToCloud();
       showToast(`[${title}] برایە تەنەکەی خۆڵ`, '🗑️');
     }
@@ -1363,12 +1534,13 @@
       const idx = trash.findIndex(t => t.trashId === trashId);
       if (idx === -1) return;
       const t = trash[idx];
-      if (t.type === 'داواکاری') orders.unshift(t.originalItem);
-      if (t.type === 'دارایی') finances.unshift(t.originalItem);
-      if (t.type === 'ئامێر') assets.unshift(t.originalItem);
-      if (t.type === 'جۆری کتێب') bookTypes.push(t.originalItem);
-      if (t.type === 'نەوعیەتی پەڕە') pageTypes.push(t.originalItem);
-      logAction('گەڕاندنەوە لە خۆڵ', `بابەتی [${t.title}] گەڕێندرایەوە`);
+      let targetTab = 'ordersTab';
+      if (t.type === 'داواکاری') { orders.unshift(t.originalItem); targetTab = 'ordersTab'; }
+      if (t.type === 'دارایی') { finances.unshift(t.originalItem); targetTab = 'financeTab'; }
+      if (t.type === 'ئامێر') { assets.unshift(t.originalItem); targetTab = 'assetsTab'; }
+      if (t.type === 'جۆری کتێب') { bookTypes.push(t.originalItem); targetTab = 'settingsTab'; }
+      if (t.type === 'نەوعیەتی پەڕە') { pageTypes.push(t.originalItem); targetTab = 'settingsTab'; }
+      logAction('گەڕاندنەوە لە خۆڵ', `بابەتی [${t.title}] گەڕێندرایەوە`, targetTab);
       trash.splice(idx, 1);
       syncToCloud();
       showToast(`[${t.title}] گەڕێندرایەوە`, '↩');
@@ -1380,7 +1552,7 @@
       const itemTitle = trash[idx].title;
       if (confirm(`ئایا دڵنیایت لە سڕینەوەی یەکجاریی [${itemTitle}]؟ چیتر ناگەڕێتەوە!`)) {
         trash.splice(idx, 1);
-        logAction('سڕینەوەی یەکجاری', `بابەتی [${itemTitle}] بە یەکجاری سڕدرایەوە`);
+        logAction('سڕینەوەی یەکجاری', `بابەتی [${itemTitle}] بە یەکجاری سڕدرایەوە`, 'trashTab');
         syncToCloud();
         showToast(`[${itemTitle}] بە یەکجاری سڕایەوە`, '❌');
       }
@@ -1389,7 +1561,7 @@
     function emptyTrash() {
       if(confirm('تەنەکەی خۆڵ بە تەواوی و یەکجاری بەتاڵ بکرێتەوە؟')) {
         trash = [];
-        logAction('بەتاڵکردنی خۆڵ', 'تەواوی تەنەکەی خۆڵ بە یەکجاری بەتاڵ کرا');
+        logAction('بەتاڵکردنی خۆڵ', 'تەواوی تەنەکەی خۆڵ بە یەکجاری بەتاڵ کرا', 'trashTab');
         syncToCloud();
         showToast('تەنەکەی خۆڵ بەتاڵ کرا', '🗑️');
       }
@@ -1413,7 +1585,7 @@
       `).join('') || '<tr><td colspan="5" style="text-align:center;">بەتاڵە</td></tr>';
     }
 
-    // مەسرەفی کار (حیبر، وەرەقە...)
+    // مەسرەفی کار
     function openNewCategoryModal() {
       document.getElementById('catNameInput').value = '';
       document.getElementById('newCategoryModal').style.display = 'flex';
@@ -1424,7 +1596,7 @@
       if (!name) return;
       if (!workCategories.includes(name)) {
         workCategories.push(name);
-        logAction('زیادکردنی کەرەستە', `جۆری مەسرەفی [${name}] دروستکرا`);
+        logAction('زیادکردنی کەرەستە', `جۆری مەسرەفی [${name}] دروستکرا`, 'workExpensesTab');
         syncToCloud();
         showToast(`جۆری [${name}] زیادکرا`, '✅');
       }
@@ -1450,7 +1622,7 @@
       workExpenses.unshift({
         id: Date.now(), category, desc: desc || category, amount, date, user: currentUser
       });
-      logAction('خەرجی کار', `بڕی ${amount.toLocaleString()} IQD بۆ [${desc || category}] لە بەشی [${category}] تۆمارکرا`);
+      logAction('خەرجی کار', `بڕی ${amount.toLocaleString()} IQD بۆ [${desc || category}] لە بەشی [${category}] تۆمارکرا`, 'workExpensesTab');
       document.getElementById('addExpenseEntryModal').style.display = 'none';
       syncToCloud();
       showToast('خەرجی پاشەکەوت کرا', '💰');
@@ -1461,7 +1633,7 @@
       if (idx !== -1) {
         const item = workExpenses[idx];
         workExpenses.splice(idx, 1);
-        logAction('سڕینەوەی مەسرەف', `خەرجی [${item.desc}] سڕدرایەوە`);
+        logAction('سڕینەوەی مەسرەف', `خەرجی [${item.desc}] سڕدرایەوە`, 'workExpensesTab');
         syncToCloud();
         showToast('خەرجی سڕایەوە', '🗑️');
       }
@@ -1531,9 +1703,26 @@
       `).join('');
     }
 
+    function toggleCustomBookType(val) {
+      const customInput = document.getElementById('mCustomBookInput');
+      if (val === '__custom__') {
+        customInput.style.display = 'block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+      }
+    }
+
     function openOrderModal(id = null) {
       document.getElementById('editOrderId').value = id || '';
-      document.getElementById('mBookTypeSelect').innerHTML = bookTypes.map(b => `<option value="${b}">${b}</option>`).join('');
+      
+      // پڕکردنەوەی جۆرەکان بە هەڵبژاردنی کەستم
+      let optionsHtml = bookTypes.map(b => `<option value="${b}">${b}</option>`).join('');
+      optionsHtml += `<option value="__custom__" style="color:var(--c-purple); font-weight:bold;">✨ جۆری تر (کەستم بنووسە)...</option>`;
+      document.getElementById('mBookTypeSelect').innerHTML = optionsHtml;
+
+      document.getElementById('mCustomBookInput').style.display = 'none';
+      document.getElementById('mCustomBookInput').value = '';
 
       if(id) {
         const o = orders.find(x => x.id === id);
@@ -1548,7 +1737,15 @@
         document.getElementById('mOrderPrice').value = o.price;
         document.getElementById('mPaymentStatus').value = o.payment;
         document.getElementById('mOrderNotes').value = o.notes;
-        document.getElementById('mBookTypeSelect').value = o.bookType || bookTypes[0];
+        
+        if (bookTypes.includes(o.bookType)) {
+          document.getElementById('mBookTypeSelect').value = o.bookType;
+        } else {
+          document.getElementById('mBookTypeSelect').value = '__custom__';
+          document.getElementById('mCustomBookInput').style.display = 'block';
+          document.getElementById('mCustomBookInput').value = o.bookType;
+        }
+
         currentImages = o.images || [];
 
         document.getElementById('modalPagesChecklist').innerHTML = pageTypes.map(p => `
@@ -1598,7 +1795,12 @@
       
       const payment = document.getElementById('mPaymentStatus').value;
       const notes = document.getElementById('mOrderNotes').value.trim();
-      const bookType = document.getElementById('mBookTypeSelect').value;
+      
+      let bookType = document.getElementById('mBookTypeSelect').value;
+      if (bookType === '__custom__') {
+        const customVal = document.getElementById('mCustomBookInput').value.trim();
+        bookType = customVal || 'کتێبی تایبەت (کەستم)';
+      }
 
       const selectedPages = [];
       document.querySelectorAll('#modalPagesChecklist input[type="checkbox"]:checked').forEach(cb => selectedPages.push(cb.value));
@@ -1617,7 +1819,7 @@
         o.payment = payment;
         o.notes = notes; o.bookType = bookType; o.selectedPages = selectedPages;
         o.images = currentImages;
-        logAction('دەستکاری داواکاری', `داواکاری [${name}] نوێکرایەوە`);
+        logAction('دەستکاری داواکاری', `داواکاری [${name}] نوێکرایەوە`, 'ordersTab');
       } else {
         orders.unshift({
           id: Date.now(), name, phone, orderDate, address, childInfo, 
@@ -1626,7 +1828,7 @@
           selectedPages, images: currentImages, completed: false,
           stages: { data: false, design: false, print: false, ready: false, sent: false }
         });
-        logAction('داواکاری نوێ', `داواکاری نوێ بۆ [${name}] بە بڕی ${price.toLocaleString()} IQD تۆمارکرا`);
+        logAction('داواکاری نوێ', `داواکاری نوێ بۆ [${name}] بە بڕی ${price.toLocaleString()} IQD تۆمارکرا`, 'ordersTab');
       }
 
       closeOrderModal();
@@ -1647,7 +1849,7 @@
       const o = orders.find(x => x.id === id);
       if(o) { 
         o.stages[stg] = !o.stages[stg]; 
-        logAction('گۆڕینی قۆناغ', `قۆناغی [${stg}] بۆ داواکاری [${o.name}] گۆڕدرا بۆ: ${o.stages[stg] ? 'تەواو' : 'ناتەواو'}`);
+        logAction('گۆڕینی قۆناغ', `قۆناغی [${stg}] بۆ داواکاری [${o.name}] گۆڕدرا بۆ: ${o.stages[stg] ? 'تەواو' : 'ناتەواو'}`, 'ordersTab');
         syncToCloud(); 
         showToast('قۆناغ نوێکرایەوە', '🔄');
       }
@@ -1657,7 +1859,7 @@
       const o = orders.find(x => x.id === id);
       if(o) {
         o.completed = true;
-        logAction('تەواوکردنی داواکاری', `داواکاری [${o.name}] بردرایە ئەرشیفی تەواوبووەکان`);
+        logAction('تەواوکردنی داواکاری', `داواکاری [${o.name}] بردرایە ئەرشیفی تەواوبووەکان`, 'completedTab');
         syncToCloud();
         showToast(`داواکاری [${o.name}] تەواو کرا`, '✅');
       }
@@ -1759,7 +1961,7 @@
       if(v) { 
         bookTypes.push(v); 
         document.getElementById('newBookInput').value=''; 
-        logAction('جۆری کتێب', `جۆری نوێ [${v}] زیادکرا`);
+        logAction('جۆری کتێب', `جۆری نوێ [${v}] زیادکرا`, 'settingsTab');
         syncToCloud(); 
         showToast('جۆری کتێب زیادکرا', '📑');
       }
@@ -1783,7 +1985,7 @@
       if(v) { 
         pageTypes.push(v); 
         document.getElementById('newPageInput').value=''; 
-        logAction('نەوعیەتی پەڕە', `پەڕەی نوێ [${v}] زیادکرا`);
+        logAction('نەوعیەتی پەڕە', `پەڕەی نوێ [${v}] زیادکرا`, 'settingsTab');
         syncToCloud(); 
         showToast('پەڕە زیادکرا', '📄');
       }
@@ -1830,10 +2032,10 @@
       if(id) {
         const f = finances.find(x => x.id == id);
         f.title = title; f.type = type; f.amount = amount; f.method = method;
-        logAction('دەستکاری دارایی', `تۆماری [${title}] نوێکرایەوە`);
+        logAction('دەستکاری دارایی', `تۆماری [${title}] نوێکرایەوە`, 'financeTab');
       } else {
         finances.unshift({ id: Date.now(), title, type, amount, method, date: new Date().toISOString().split('T')[0] });
-        logAction('دارایی نوێ', `تۆماری دارایی [${title}] بە بڕی ${amount.toLocaleString()} IQD دانرا`);
+        logAction('دارایی نوێ', `تۆماری دارایی [${title}] بە بڕی ${amount.toLocaleString()} IQD دانرا`, 'financeTab');
       }
       closeFinanceModal();
       syncToCloud();
@@ -1892,10 +2094,10 @@
       if(id) {
         const a = assets.find(x => x.id == id);
         a.name = name; a.price = price; a.cond = cond;
-        logAction('دەستکاری ئامێر', `ئامێری [${name}] نوێکرایەوە`);
+        logAction('دەستکاری ئامێر', `ئامێری [${name}] نوێکرایەوە`, 'assetsTab');
       } else {
         assets.unshift({ id: Date.now(), name, price, cond });
-        logAction('ئامێری نوێ', `ئامێری [${name}] بە نرخی ${price.toLocaleString()} IQD تۆمارکرا`);
+        logAction('ئامێری نوێ', `ئامێری [${name}] بە نرخی ${price.toLocaleString()} IQD تۆمارکرا`, 'assetsTab');
       }
       closeAssetModal();
       syncToCloud();
@@ -2007,6 +2209,7 @@
       setEl('dExpenseTotal', allExpenses.toLocaleString() + ' IQD');
       setEl('dAvgOrder', avgOrder.toLocaleString() + ' IQD');
 
+      // داتای باڕەکانی ۱۲ مانگ
       const monthlyTotals = new Array(12).fill(0);
       orders.forEach(o => {
         const d = o.orderDate ? new Date(o.orderDate) : new Date(o.id);
@@ -2030,6 +2233,42 @@
           <span class="bar-label">${idx + 1}</span>
         </div>`;
       }).join('');
+
+      // داتا ئەنەلایزی کتێبەکان و پەڕەکان لەناو filteredOrders
+      const qAnalytics = (document.getElementById('analyticsSearchInput')?.value || '').trim().toLowerCase();
+      
+      // ژماردنی فرۆشی هەر جۆرە کتێبێک
+      const bookCounts = {};
+      const pageCounts = {};
+
+      filteredOrders.forEach(o => {
+        const b = o.bookType || 'کتێبی تر';
+        bookCounts[b] = (bookCounts[b] || 0) + 1;
+
+        (o.selectedPages || []).forEach(p => {
+          pageCounts[p] = (pageCounts[p] || 0) + 1;
+        });
+      });
+
+      // ڕیزبەندی کتێبەکان بەپێی زۆرترین
+      const sortedBooks = Object.entries(bookCounts).sort((a,b) => b[1] - a[1]);
+      const topBooksBox = document.getElementById('topBooksAnalyticsList');
+      topBooksBox.innerHTML = sortedBooks.filter(([name]) => !qAnalytics || name.toLowerCase().includes(qAnalytics)).map(([name, count]) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:3px 6px; background:#f8fafc; border-radius:6px;">
+          <span>📚 ${name}</span>
+          <strong style="color:var(--c-purple);">${count} داواکاری</strong>
+        </div>
+      `).join('') || '<div style="font-size:11px; color:#94a3b8;">هیچ داتایەک نەدۆزرایەوە</div>';
+
+      // ڕیزبەندی پەڕەکان بەپێی زۆرترین
+      const sortedPages = Object.entries(pageCounts).sort((a,b) => b[1] - a[1]);
+      const topPagesBox = document.getElementById('topPagesAnalyticsList');
+      topPagesBox.innerHTML = sortedPages.filter(([name]) => !qAnalytics || name.toLowerCase().includes(qAnalytics)).map(([name, count]) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:3px 6px; background:#f8fafc; border-radius:6px;">
+          <span>📄 ${name}</span>
+          <strong style="color:var(--c-green);">${count} جار سەحی لێدراوە</strong>
+        </div>
+      `).join('') || '<div style="font-size:11px; color:#94a3b8;">هیچ داتایەک نەدۆزرایەوە</div>';
     }
 
     window.onload = () => {
