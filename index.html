@@ -165,6 +165,15 @@
       justify-content: center;
     }
 
+    .badge-count.pulsing {
+      animation: pulseAlert 1s infinite alternate;
+    }
+
+    @keyframes pulseAlert {
+      from { transform: scale(1); box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); }
+      to { transform: scale(1.25); box-shadow: 0 0 10px rgba(239, 68, 68, 0.8); }
+    }
+
     .pop-dropdown {
       display: none;
       position: absolute;
@@ -174,11 +183,40 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-      width: 320px;
+      width: 330px;
       max-height: 420px;
       overflow-y: auto;
       z-index: 200;
       padding: 0.8rem;
+    }
+
+    /* مۆداڵی ئەلەرمی فریاگوزاری (سایرین) */
+    #emergencyAlarmModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .emergency-box {
+      background: #fff;
+      border-top: 6px solid var(--c-red);
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      animation: popBounce 0.3s ease;
+    }
+
+    @keyframes popBounce {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     .container {
@@ -186,6 +224,16 @@
       margin: 1rem auto;
       padding: 0 0.8rem;
       width: 100%;
+    }
+
+    /* سێرچی گشتی لە سەرەوە */
+    .global-search-container {
+      background: #ffffff;
+      padding: 0.8rem 1rem;
+      border-radius: 14px;
+      border: 2px solid var(--c-purple);
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 14px rgba(112, 66, 248, 0.08);
     }
 
     .filter-bar {
@@ -540,10 +588,28 @@
 </head>
 <body>
 
-  <!-- نۆتیفیکەیشن -->
+  <!-- نۆتیفیکەیشنی خێرا -->
   <div id="toastNotification">
     <span id="toastIcon">🔔</span>
     <span id="toastMsg">کردارەکە سەرکەوتوو بوو</span>
+  </div>
+
+  <!-- مۆداڵی ئەلەرمی دەنگی و فریاگوزاری (سایرین بۆ ٢٤، ٤٨، ٧٢ سەعات) -->
+  <div id="emergencyAlarmModal">
+    <div class="emergency-box">
+      <div style="font-size:42px; margin-bottom:0.4rem; animation:pulseAlert 0.8s infinite alternate;">🚨</div>
+      <h3 style="color:var(--c-red); margin-bottom:0.3rem;">ئاگاداری بەپەلە! داواکاری دواکەوتووە</h3>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:1rem;">
+        ئەم داواکارییانەی خوارەوە زیاتر لە ٢٤ یان ٤٨ یان ٧٢ کاتژمێرە ماونەتەوە و نەگەیشتوونەتە قۆناغی پرێنت!
+      </p>
+      
+      <div id="alarmOrdersList" style="text-align:right; max-height:180px; overflow-y:auto; margin-bottom:1.2rem; display:flex; flex-direction:column; gap:6px;"></div>
+
+      <div style="display:flex; justify-content:center; gap:0.6rem;">
+        <button class="btn btn-danger" onclick="stopEmergencyAlarm()">🔕 بێدەنگکردن و ڕاگرتنی ئەلەرم</button>
+        <button class="btn btn-primary" onclick="stopEmergencyAlarm(); switchTab('ordersTab');">چوون بۆ داواکارییەکان ↗</button>
+      </div>
+    </div>
   </div>
 
   <!-- مۆداڵی لۆگین -->
@@ -582,7 +648,7 @@
     </div>
     
     <div class="header-actions">
-      <!-- نۆتی هاوبەش -->
+      <!-- بەشی نۆتی هاوبەش -->
       <div class="icon-btn-wrapper" onclick="toggleNotesDropdown(event)">
         <div class="circle-icon-btn" title="نۆت و تودوولیستی هاوبەش">📝</div>
         <div class="badge-count" id="notesBadge" style="background:var(--c-purple);">0</div>
@@ -598,7 +664,13 @@
         </div>
       </div>
 
-      <!-- نۆتیفیکەیشن -->
+      <!-- بەشی ئەلەرم و سایرین بۆ تەڵەبی دواکەوتوو (٢٤، ٤٨، ٧٢ سەعات) -->
+      <div class="icon-btn-wrapper" onclick="openEmergencyModalDirectly(event)">
+        <div class="circle-icon-btn" style="background:#fee2e2; border-color:var(--c-red);" title="ئاگاداری تەڵەبی دواکەوتوو">🚨</div>
+        <div class="badge-count pulsing" id="alarmBadge" style="background:var(--c-red);">0</div>
+      </div>
+
+      <!-- نۆتیفیکەیشنی ئاسایی (قەرزەکان) -->
       <div class="icon-btn-wrapper" onclick="toggleNotifDropdown(event)">
         <div class="circle-icon-btn" title="ئاگادارییەکان">🔔</div>
         <div class="badge-count" id="notifBadge">0</div>
@@ -614,15 +686,27 @@
   </header>
 
   <div class="container">
-    <!-- داشبۆرد و داتا ئەنەلایزی پێشکەوتوو -->
+
+    <!-- سێرچی گشتی (Universal Global Search) لە هەموو داتابەیسەکەدا -->
+    <div class="global-search-container">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+        <strong style="font-size:13.5px; color:var(--c-purple);">🔍 سێرچی گشتی لە سەرانسەری سیستەمدا (تەڵەب، خەرجی کار، حیبر، دارایی، ئامێر):</strong>
+        <span style="font-size:11px; color:var(--text-muted);">هەر وشە، ناو، نرخ، یان مۆبایلێک بنووسە لە هەموو بەشەکاندا دەیدۆزێتەوە</span>
+      </div>
+      <input type="text" id="globalSearchInput" class="form-control" style="font-size:13px; padding:0.5rem 0.8rem; border-color:var(--c-purple);" placeholder="لێرە بنووسە بۆ گەڕانی خێرا لە هەموو داتابەیسەکە..." oninput="handleGlobalSearch()">
+      
+      <div id="globalSearchResults" style="display:none; margin-top:0.6rem; max-height:220px; overflow-y:auto; background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:0.5rem;"></div>
+    </div>
+
+    <!-- داشبۆرد و داتا ئەنەلایز -->
     <div id="dashboardTab" class="view-panel">
       
-      <!-- کالێندەری مەودای کات (Custom Date Range) -->
+      <!-- کالێندەری مەودای کات -->
       <div class="adv-search-panel" style="background:#fff; border-right:4px solid var(--c-purple);">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
           <div>
             <strong style="font-size:13.5px; color:var(--c-purple);">📅 کالێندەری مەودای کات (ڕۆژ بە ڕۆژ و مانگانە):</strong>
-            <span style="font-size:11.5px; color:var(--text-muted); margin-right:4px;">دەتوانیت ٥ ڕۆژ، ١٠ ڕۆژ، یان هەر مەودایەکی تایبەت هەڵبژێریت</span>
+            <span style="font-size:11.5px; color:var(--text-muted); margin-right:4px;">٥ ڕۆژ، ١٠ ڕۆژ، یان هەر مەودایەک دیاری بکە</span>
           </div>
           <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
             <label style="font-size:12px; font-weight:bold;">لە:</label>
@@ -635,36 +719,32 @@
         </div>
       </div>
 
-      <!-- پانێڵی داتا ئەنەلایز (تەمەنی منداڵ، دایک/باوک، ڕەگەز، شارەکان) -->
+      <!-- پانێڵی داتا ئەنەلایز -->
       <div class="chart-container" style="background: linear-gradient(to left, #ffffff, #f8fafc); border-right: 4px solid var(--c-indigo);">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.8rem;">
           <div>
-            <strong style="font-size:14px; color:var(--c-indigo);">🧠 داتا ئەنەلایزی پێشکەوتووی بازاڕگەری (Insights & Analytics)</strong>
-            <div style="font-size:11.5px; color:var(--text-muted);">شیکاری تەمەنی منداڵان، بڕیاردەر (دایک یان باوک)، ڕەگەز و پڕفرۆشترین شارەکان</div>
+            <strong style="font-size:14px; color:var(--c-indigo);">🧠 داتا ئەنەلایزی بازاڕگەری (Insights & Analytics)</strong>
+            <div style="font-size:11.5px; color:var(--text-muted);">شیکاری تەمەن، بڕیاردەر (دایک یان باوک)، ڕەگەز و شارەکان</div>
           </div>
           <input type="text" id="analyticsSearchInput" class="form-control" style="width:240px; font-size:12px; padding:0.4rem 0.6rem;" placeholder="🔍 سێرچی خێرا لە شیکارییەکان..." oninput="calculateStats()">
         </div>
 
         <div class="grid-4">
-          <!-- تەمەنی منداڵان -->
           <div style="background:#fff; padding:0.7rem; border-radius:10px; border:1px solid var(--border);">
             <strong style="font-size:12px; color:var(--c-purple);">🎂 پڕداواکراوترین تەمەن:</strong>
             <div id="analyticsTopAges" style="margin-top:6px; display:flex; flex-direction:column; gap:3px; max-height:110px; overflow-y:auto; font-size:11.5px;"></div>
           </div>
 
-          <!-- دایک یان باوک -->
           <div style="background:#fff; padding:0.7rem; border-radius:10px; border:1px solid var(--border);">
             <strong style="font-size:12px; color:var(--c-pink);">👪 کێ زیاتر داوای کردووە؟</strong>
             <div id="analyticsOrderer" style="margin-top:6px; display:flex; flex-direction:column; gap:3px; max-height:110px; overflow-y:auto; font-size:11.5px;"></div>
           </div>
 
-          <!-- ڕەگەزی منداڵ -->
           <div style="background:#fff; padding:0.7rem; border-radius:10px; border:1px solid var(--border);">
             <strong style="font-size:12px; color:var(--c-blue);">👶 ڕەگەزی منداڵ:</strong>
             <div id="analyticsGender" style="margin-top:6px; display:flex; flex-direction:column; gap:3px; max-height:110px; overflow-y:auto; font-size:11.5px;"></div>
           </div>
 
-          <!-- پڕفرۆشترین شارەکان -->
           <div style="background:#fff; padding:0.7rem; border-radius:10px; border:1px solid var(--border);">
             <strong style="font-size:12px; color:var(--c-teal);">🏙️ پڕفرۆشترین شارەکان:</strong>
             <div id="analyticsCities" style="margin-top:6px; display:flex; flex-direction:column; gap:3px; max-height:110px; overflow-y:auto; font-size:11.5px;"></div>
@@ -710,7 +790,7 @@
       <div class="colorful-grid" id="mainCardsGrid"></div>
     </div>
 
-    <!-- داواکارییەکان لەگەڵ مەکینەی سێرچی پێشکەوتوو -->
+    <!-- داواکارییەکان -->
     <div id="ordersTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
         <h3>داواکارییە چالاکەکان</h3>
@@ -720,7 +800,6 @@
         </div>
       </div>
 
-      <!-- پانێڵی سێرچی پێشکەوتوو بە سەح و فلتەر -->
       <div class="adv-search-panel">
         <div style="display:flex; gap:0.5rem; align-items:center;">
           <input type="text" id="orderSearch" class="form-control" placeholder="🔍 سێرچی پێشکەوتوو (بە نرخ، ناو، مۆبایل، دایک/باوک، ڕەگەز، تەمەن، شار)..." oninput="renderOrders()">
@@ -916,7 +995,7 @@
     </div>
   </div>
 
-  <!-- مۆداڵی داواکاری (فۆڕمی پێشکەوتووی داتا ئینتری) -->
+  <!-- مۆداڵی داواکاری -->
   <div id="orderModal" class="modal">
     <div class="modal-box">
       <h3 id="orderModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">داواکاری</h3>
@@ -933,7 +1012,6 @@
         </div>
       </div>
 
-      <!-- کێ داوای کردووە و ناونیشان -->
       <div class="grid-2" style="margin-top:0.4rem;">
         <div>
           <label style="font-size:12px; font-weight:bold; color:var(--c-purple);">کێ داوای کردووە؟</label>
@@ -949,7 +1027,6 @@
         </div>
       </div>
 
-      <!-- بەروار و کاتی داواکردن و کاتی تەسلیمکردن -->
       <div class="grid-2" style="margin-top:0.4rem; background:#f8fafc; padding:0.5rem; border-radius:8px; border:1px solid var(--border);">
         <div>
           <label style="font-size:11.5px; font-weight:bold;">بەروار و کاتی داواکردن:</label>
@@ -964,7 +1041,6 @@
         </div>
       </div>
 
-      <!-- زانیاری منداڵ: ناو، تەمەن، ڕەگەز -->
       <div class="grid-2" style="margin-top:0.4rem;">
         <div>
           <label style="font-size:12px; font-weight:bold;">ناوی منداڵ:</label>
@@ -1199,6 +1275,182 @@
       setTimeout(() => { toast.classList.remove('show'); }, 2800);
     }
 
+    // دەنگی ئەلەرم لە ڕێگەی Web Audio API (لە هەموو مۆبایل و براوسەرێک ئیش دەکات بێ فایلی دەنگی)
+    let audioCtx = null;
+    let alarmInterval = null;
+
+    function playSirenBeep() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      } catch (e) {}
+    }
+
+    function startEmergencySound() {
+      if (alarmInterval) return;
+      playSirenBeep();
+      alarmInterval = setInterval(playSirenBeep, 800);
+    }
+
+    function stopEmergencyAlarm() {
+      if (alarmInterval) {
+        clearInterval(alarmInterval);
+        alarmInterval = null;
+      }
+      document.getElementById('emergencyAlarmModal').style.display = 'none';
+      // پاشەکەوتکردنی کاتی بێدەنگکردن بۆ ئەوەی تا ١٢ سەعات بێدەنگ بێت
+      localStorage.setItem('th_last_snooze', Date.now());
+    }
+
+    function openEmergencyModalDirectly(e) {
+      if(e) e.stopPropagation();
+      checkEmergencyAlerts(true);
+    }
+
+    // پشکنینی داواکارییەکان بۆ ٢٤، ٤٨، ٧٢ کاتژمێر
+    function checkEmergencyAlerts(forceOpen = false) {
+      const now = Date.now();
+      const lastSnooze = Number(localStorage.getItem('th_last_snooze') || 0);
+      const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+      const canPlaySound = (now - lastSnooze) > TWELVE_HOURS_MS;
+
+      const overdueOrders = [];
+
+      orders.forEach(o => {
+        // ئەگەر داواکارییەکە تەواو نەبووبێت و هێشتا نەگەیشتبێتە قۆناغی پرێنت
+        if (!o.completed && (!o.stages || !o.stages.print)) {
+          const orderTimeMs = o.orderDate ? new Date(o.orderDate).getTime() : o.id;
+          const diffHours = Math.floor((now - orderTimeMs) / (1000 * 60 * 60));
+
+          if (diffHours >= 24) {
+            overdueOrders.push({
+              ...o,
+              diffHours
+            });
+          }
+        }
+      });
+
+      document.getElementById('alarmBadge').innerText = overdueOrders.length;
+
+      const listContainer = document.getElementById('alarmOrdersList');
+      if (!overdueOrders.length) {
+        listContainer.innerHTML = '<div style="text-align:center; color:#10b981; font-weight:bold;">هیچ داواکارییەکی دواکەوتوو نییە، دەستخۆش! 🎉</div>';
+      } else {
+        listContainer.innerHTML = overdueOrders.map(o => `
+          <div style="background:#fee2e2; border-right:4px solid var(--c-red); padding:6px 10px; border-radius:6px; font-size:12px;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; color:#b91c1c;">
+              <span>👤 کڕیار: ${o.name}</span>
+              <span>⚠️ ${o.diffHours} کاتژمێرە دواکەوتووە!</span>
+            </div>
+            <div style="color:#475569; font-size:11px; margin-top:2px;">
+              کتێب: ${o.bookType} | تەلەفۆن: ${o.phone || '---'} | قۆناغی ئێستا: ${o.stages?.design ? 'دیزاین کراوە' : 'تەنانەت دیزاینیش نەکراوە'}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // ئەگەر داواکاری دواکەوتوو هەبوو و ١٢ سەعات تێپەڕیبوو یان بە دەست کرایەوە
+      if (overdueOrders.length > 0 && (canPlaySound || forceOpen)) {
+        document.getElementById('emergencyAlarmModal').style.display = 'flex';
+        startEmergencySound();
+      }
+    }
+
+    // سێرچی گشتی لە سەرانسەری داتابەیسەکە
+    function handleGlobalSearch() {
+      const raw = document.getElementById('globalSearchInput').value.trim();
+      const q = raw.toLowerCase();
+      const qNum = cleanNumStr(raw);
+      const resBox = document.getElementById('globalSearchResults');
+
+      if (!q) {
+        resBox.style.display = 'none';
+        resBox.innerHTML = '';
+        return;
+      }
+
+      let matches = [];
+
+      // سێرچ لە داواکارییەکان
+      orders.forEach(o => {
+        let hit = false;
+        if (o.name && o.name.toLowerCase().includes(q)) hit = true;
+        if (o.bookType && o.bookType.toLowerCase().includes(q)) hit = true;
+        if (o.address && o.address.toLowerCase().includes(q)) hit = true;
+        if (qNum && o.phone && cleanNumStr(o.phone).includes(qNum)) hit = true;
+        if (qNum && String(o.price).includes(qNum)) hit = true;
+        if (hit) {
+          matches.push(`
+            <div style="padding:4px 6px; border-bottom:1px solid #e2e8f0; font-size:12px; cursor:pointer;" onclick="switchTab('ordersTab'); document.getElementById('orderSearch').value='${o.name}'; renderOrders();">
+              <strong style="color:var(--c-purple);">📦 داواکاری:</strong> ${o.name} (${o.bookType}) - ${o.price?.toLocaleString()} IQD | ${o.phone || ''}
+            </div>
+          `);
+        }
+      });
+
+      // سێرچ لە مەسرەفی کار (حیبر، وەرەقە...)
+      workExpenses.forEach(w => {
+        let hit = false;
+        if (w.desc && w.desc.toLowerCase().includes(q)) hit = true;
+        if (w.category && w.category.toLowerCase().includes(q)) hit = true;
+        if (qNum && String(w.amount).includes(qNum)) hit = true;
+        if (hit) {
+          matches.push(`
+            <div style="padding:4px 6px; border-bottom:1px solid #e2e8f0; font-size:12px; cursor:pointer;" onclick="switchTab('workExpensesTab');">
+              <strong style="color:var(--c-red);">🛠️ مەسرەفی کار:</strong> [${w.category}] ${w.desc} - ${w.amount?.toLocaleString()} IQD
+            </div>
+          `);
+        }
+      });
+
+      // سێرچ لە دارایی و FIB
+      finances.forEach(f => {
+        let hit = false;
+        if (f.title && f.title.toLowerCase().includes(q)) hit = true;
+        if (qNum && String(f.amount).includes(qNum)) hit = true;
+        if (hit) {
+          matches.push(`
+            <div style="padding:4px 6px; border-bottom:1px solid #e2e8f0; font-size:12px; cursor:pointer;" onclick="switchTab('financeTab');">
+              <strong style="color:var(--c-green);">💰 دارایی و FIB:</strong> ${f.title} (${f.type}) - ${f.amount?.toLocaleString()} IQD
+            </div>
+          `);
+        }
+      });
+
+      // سێرچ لە ئامێرەکان
+      assets.forEach(a => {
+        let hit = false;
+        if (a.name && a.name.toLowerCase().includes(q)) hit = true;
+        if (qNum && String(a.price).includes(qNum)) hit = true;
+        if (hit) {
+          matches.push(`
+            <div style="padding:4px 6px; border-bottom:1px solid #e2e8f0; font-size:12px; cursor:pointer;" onclick="switchTab('assetsTab');">
+              <strong style="color:var(--c-indigo);">🖥️ ئامێر:</strong> ${a.name} - ${a.price?.toLocaleString()} IQD
+            </div>
+          `);
+        }
+      });
+
+      if (matches.length > 0) {
+        resBox.style.display = 'block';
+        resBox.innerHTML = matches.join('');
+      } else {
+        resBox.style.display = 'block';
+        resBox.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:6px;">هیچ ئەنجامێک لە داتابەیسەکەدا نەدۆزرایەوە</div>';
+      }
+    }
+
     function toggleNotifDropdown(e) {
       e.stopPropagation();
       const dd = document.getElementById('notifDropdown');
@@ -1324,6 +1576,7 @@
           localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
           
           refreshAllUI();
+          checkEmergencyAlerts(); // پشکنینی ئۆتۆماتیکی ئەلەرمەکان لە کاتی کلاود
         }
       });
     }
@@ -1419,7 +1672,7 @@
 
       let html = '';
       if (unpaids.length > 0) {
-        html += `<div style="color:var(--c-purple); font-weight:bold; margin-bottom:2px;">داواکارییە قەرزەکان (کلیک بکە بۆ بینینیان):</div>`;
+        html += `<div style="color:var(--c-purple); font-weight:bold; margin-bottom:2px;">داواکارییە قەرزەکان:</div>`;
         unpaids.forEach(u => {
           const isFresh = (now - u.id) < TWENTY_FOUR_HOURS_MS;
           html += `
@@ -1432,7 +1685,7 @@
       if (inProgress.length > 0) {
         html += `
         <div style="color:var(--c-blue); font-weight:bold; margin-top:6px; cursor:pointer;" onclick="switchTab('ordersTab')">
-          📦 ${inProgress.length} داواکاری لە قۆناغی کاردان (کلیک بکە)
+          📦 ${inProgress.length} داواکاری لە قۆناغی کاردان
         </div>`;
       }
       list.innerHTML = html;
@@ -1460,7 +1713,6 @@
       calculateStats();
     }
 
-    // داونلۆدی داتاکان بە Excel/CSV بە ژمارەی مۆبایل و وردەکاری
     function exportOrdersToCSV() {
       if (!orders.length) return alert('هیچ داواکارییەک نییە بۆ داونلۆد!');
       
@@ -2379,7 +2631,6 @@
       `).join('') || '<tr><td colspan="4" style="text-align:center;">هیچ ئامێرێک نییە</td></tr>';
     }
 
-    // ژماردنی ئامارەکان لەگەڵ کالێندەر و شیکارییەکانی تەمەن و شار و ڕەگەز
     function calculateStats() {
       const filterMode = document.getElementById('timeFilterSelect').value;
       const startDate = document.getElementById('dateRangeStart')?.value;
@@ -2391,7 +2642,6 @@
 
       let filteredOrders = orders;
 
-      // ١. فلتەر بەپێی کالێندەری مەودای کات (لە... تا...)
       if (customDateRangeActive && (startDate || endDate)) {
         filteredOrders = orders.filter(o => {
           if (!o.orderDate) return false;
@@ -2400,7 +2650,6 @@
           return true;
         });
       } else {
-        // فلتەری ئاسایی مانگانە
         if (filterMode === 'this_month') {
           filteredOrders = orders.filter(o => {
             const d = o.orderDate ? new Date(o.orderDate) : new Date(o.id);
@@ -2464,6 +2713,7 @@
       const debt = finances.filter(f => f.type === 'debt').reduce((s, f) => s + (f.amount || 0), 0);
       const assetsVal = assets.reduce((s, a) => s + (a.price || 0), 0);
 
+      // قازانجی گشتی: فرۆشتن + خێری گەیاندن - مەسرەف
       const netProfit = (totalSales + totalDeliveryProfit) - allExpenses;
       const avgOrder = filteredOrders.length > 0 ? Math.round(totalSales / filteredOrders.length) : 0;
 
@@ -2486,7 +2736,6 @@
       setEl('dExpenseTotal', allExpenses.toLocaleString() + ' IQD');
       setEl('dAvgOrder', avgOrder.toLocaleString() + ' IQD');
 
-      // بارەکانی مانگانە
       const monthlyTotals = new Array(12).fill(0);
       orders.forEach(o => {
         const d = o.orderDate ? new Date(o.orderDate) : new Date(o.id);
@@ -2511,7 +2760,6 @@
         </div>`;
       }).join('');
 
-      // داتا ئەنەلایزی پێشکەوتوو
       const rawQ = (document.getElementById('analyticsSearchInput')?.value || '').trim();
       const q = rawQ.toLowerCase();
       const qNum = cleanNumStr(rawQ);
@@ -2524,25 +2772,20 @@
       const pageCounts = {};
 
       filteredOrders.forEach(o => {
-        // تەمەن
         if (o.childAge) {
           const ageKey = o.childAge + ' ساڵان';
           ageCounts[ageKey] = (ageCounts[ageKey] || 0) + 1;
         }
 
-        // داواکار
         const ord = o.ordererRelation || 'دایک';
         ordererCounts[ord] = (ordererCounts[ord] || 0) + 1;
 
-        // ڕەگەز
         const gen = o.childGender || 'کوڕ';
         genderCounts[gen] = (genderCounts[gen] || 0) + 1;
 
-        // شار
         const city = (o.address || 'دیارینەکراو').split(/،|-|\s/)[0].trim() || 'دیارینەکراو';
         cityCounts[city] = (cityCounts[city] || 0) + 1;
 
-        // کتێب و پەڕە
         const b = o.bookType || 'کتێبی تر';
         bookCounts[b] = (bookCounts[b] || 0) + 1;
 
@@ -2551,7 +2794,6 @@
         });
       });
 
-      // نیشاندانی تەمەنەکان
       const sortedAges = Object.entries(ageCounts).sort((a,b) => b[1] - a[1]);
       document.getElementById('analyticsTopAges').innerHTML = sortedAges.map(([age, c]) => `
         <div style="display:flex; justify-content:space-between; padding:2px 4px; background:#f8fafc; border-radius:4px;">
@@ -2559,21 +2801,18 @@
         </div>
       `).join('') || '<div style="color:#94a3b8;">داتای تەمەن نییە</div>';
 
-      // نیشاندانی داواکار (دایک یان باوک)
       document.getElementById('analyticsOrderer').innerHTML = Object.entries(ordererCounts).filter(([_, c]) => c > 0).map(([who, c]) => `
         <div style="display:flex; justify-content:space-between; padding:2px 4px; background:#f8fafc; border-radius:4px;">
           <span>${who}</span><strong style="color:var(--c-pink);">${c} داواکاری</strong>
         </div>
       `).join('') || '<div style="color:#94a3b8;">داتای داواکار نییە</div>';
 
-      // نیشاندانی ڕەگەز
       document.getElementById('analyticsGender').innerHTML = Object.entries(genderCounts).filter(([_, c]) => c > 0).map(([g, c]) => `
         <div style="display:flex; justify-content:space-between; padding:2px 4px; background:#f8fafc; border-radius:4px;">
           <span>${g}</span><strong style="color:var(--c-blue);">${c} منداڵ</strong>
         </div>
       `).join('') || '<div style="color:#94a3b8;">داتای ڕەگەز نییە</div>';
 
-      // نیشاندانی شارەکان
       const sortedCities = Object.entries(cityCounts).sort((a,b) => b[1] - a[1]);
       document.getElementById('analyticsCities').innerHTML = sortedCities.slice(0, 5).map(([city, c]) => `
         <div style="display:flex; justify-content:space-between; padding:2px 4px; background:#f8fafc; border-radius:4px;">
@@ -2581,7 +2820,6 @@
         </div>
       `).join('') || '<div style="color:#94a3b8;">داتای شار نییە</div>';
 
-      // نیشاندانی کتێب و پەڕەکان بە فلتەری سێرچ
       const sortedBooks = Object.entries(bookCounts).sort((a,b) => b[1] - a[1]);
       document.getElementById('topBooksAnalyticsList').innerHTML = sortedBooks.filter(([name]) => !q || name.toLowerCase().includes(q)).map(([name, count]) => `
         <div style="display:flex; justify-content:space-between; padding:3px 6px; background:#f8fafc; border-radius:6px;">
