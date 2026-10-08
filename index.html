@@ -458,6 +458,15 @@
       .grid-2 { grid-template-columns: 1fr; }
     }
 
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.8rem;
+    }
+    @media (max-width: 820px) {
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+
     .grid-4 {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -585,7 +594,17 @@
       text-decoration: line-through;
     }
 
-    /* ستایلی چاپی پسوولە */
+    /* پەنێڵی پێشنیاری کڕیار */
+    #repeatCustomerBanner {
+      display: none;
+      background: #eef2ff;
+      border: 1.5px solid var(--c-purple);
+      border-radius: 10px;
+      padding: 0.6rem 0.8rem;
+      margin-bottom: 0.8rem;
+      animation: popBounce 0.2s ease;
+    }
+
     @media print {
       body * { visibility: hidden; }
       #printableInvoiceArea, #printableInvoiceArea * { visibility: visible; }
@@ -607,7 +626,7 @@
       <div style="font-size:42px; margin-bottom:0.4rem; animation:pulseAlert 0.8s infinite alternate;">🚨</div>
       <h3 style="color:var(--c-red); margin-bottom:0.3rem;">ئاگاداری بەپەلە! داواکاری دواکەوتووە</h3>
       <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:1rem;">
-        ئەم داواکارییانەی خوارەوە ٢٤ یان ٤٨ یان ٧٢ کاتژمێریان بەسەردا چووە و هێشتا نەگەیشتوونەتە قۆناغی پرێنت!
+        ئەم داواکارییانەی خوارەوە ٢٤ کاتژمێریان بەسەردا چووە و هێشتا نەگەیشتوونەتە قۆناغی پرێنت!
       </p>
       
       <div id="alarmOrdersList" style="text-align:right; max-height:180px; overflow-y:auto; margin-bottom:1.2rem; display:flex; flex-direction:column; gap:6px;"></div>
@@ -647,7 +666,7 @@
       <button class="nav-pill" onclick="switchTab('ordersTab')"><span>📦</span><span class="nav-label">داواکارییەکان</span></button>
       <button class="nav-pill" onclick="switchTab('workExpensesTab')"><span>🛠️</span><span class="nav-label">مەسرەفی کار (حیبر...)</span></button>
       <button class="nav-pill" onclick="switchTab('completedTab')"><span>✅</span><span class="nav-label">تەواوبووەکان</span></button>
-      <button class="nav-pill" onclick="switchTab('settingsTab')"><span>📑</span><span class="nav-label">جۆرەکان و پەڕەکان</span></button>
+      <button class="nav-pill" onclick="switchTab('settingsTab')"><span>📑</span><span class="nav-label">جۆرەکان، پەڕەکان و قاڵبەکان</span></button>
       <button class="nav-pill" onclick="switchTab('financeTab')"><span>💰</span><span class="nav-label">دارایی و FIB</span></button>
       <button class="nav-pill" onclick="switchTab('assetsTab')"><span>🖥️</span><span class="nav-label">ئامێرەکان</span></button>
       <button class="nav-pill" onclick="switchTab('logsTab')"><span>📜</span><span class="nav-label">لۆگ و مێژوو</span></button>
@@ -661,10 +680,10 @@
         <div class="badge-count" id="notesBadge" style="background:var(--c-purple);">0</div>
         <div class="pop-dropdown" id="notesDropdown">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
-            <strong style="font-size:12px; color:var(--c-purple);">📝 نۆت و تودوولیست (هاوبەش بۆ هەفتەیەک):</strong>
+            <strong style="font-size:12px; color:var(--c-purple);">📝 نۆت و تودوولیست:</strong>
           </div>
           <div style="display:flex; gap:4px; margin-bottom:0.6rem;">
-            <input type="text" id="newNoteInput" class="form-control" style="font-size:12px; padding:0.4rem;" placeholder="نووسینی نۆتێک یان ئەرکێک...">
+            <input type="text" id="newNoteInput" class="form-control" style="font-size:12px; padding:0.4rem;" placeholder="نووسینی نۆتێک...">
             <button class="btn btn-primary btn-sm" onclick="addSharedNote()">ناردن</button>
           </div>
           <div id="notesListContainer"></div>
@@ -694,7 +713,7 @@
 
   <div class="container">
 
-    <!-- سێرچی گشتی لە تەواوی داتابەیسەکەدا -->
+    <!-- سێرچی گشتی -->
     <div class="global-search-container">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
         <strong style="font-size:13.5px; color:var(--c-purple);">🔍 سێرچی گشتی لە سەرانسەری سیستەمدا:</strong>
@@ -713,7 +732,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem;">
           <div>
             <strong style="font-size:13.5px; color:var(--c-purple);">📅 کالێندەری مەودای کات (ڕۆژ بە ڕۆژ و مانگانە):</strong>
-            <span style="font-size:11.5px; color:var(--text-muted); margin-right:4px;">٥ ڕۆژ، ١٠ ڕۆژ، یان هەر مەودایەک دیاری بکە</span>
+            <span style="font-size:11.5px; color:var(--text-muted); margin-right:4px;">مەودای بەروار دیاری بکە بۆ ڕاپۆرت</span>
           </div>
           <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
             <label style="font-size:12px; font-weight:bold;">لە:</label>
@@ -731,7 +750,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.8rem;">
           <div>
             <strong style="font-size:14px; color:var(--c-indigo);">🧠 داتا ئەنەلایزی بازاڕگەری (Insights & Analytics)</strong>
-            <div style="font-size:11.5px; color:var(--text-muted);">شیکاری تەمەن، بڕیاردەر (دایک یان باوک)، ڕەگەز و شارەکان</div>
+            <div style="font-size:11.5px; color:var(--text-muted);">شیکاری تەمەن، بڕیاردەر، ڕەگەز و شارەکان</div>
           </div>
           <input type="text" id="analyticsSearchInput" class="form-control" style="width:240px; font-size:12px; padding:0.4rem 0.6rem;" placeholder="🔍 سێرچی خێرا لە شیکارییەکان..." oninput="calculateStats()">
         </div>
@@ -882,33 +901,51 @@
       </div>
     </div>
 
-    <!-- جۆرەکان و پەڕەکان -->
+    <!-- جۆرەکان، پەڕەکان و قاڵبە باوەکان -->
     <div id="settingsTab" class="view-panel" style="display: none;">
-      <div class="grid-2">
+      <div class="grid-3">
+        <!-- جۆری کتێب -->
         <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
             <h4>جۆرەکانی داواکاری / کتێب</h4>
-            <span style="font-size:11px; color:var(--text-muted);">💡 بە دەست و ماوس ڕایبکێشە بۆ سەروو خوار</span>
+            <span style="font-size:11px; color:var(--text-muted);">💡 ڕایبکێشە</span>
           </div>
-          <input type="text" id="searchBookTypeInput" class="form-control" style="margin-bottom:0.6rem; padding:0.4rem 0.6rem; font-size:12.5px;" placeholder="🔍 سێرچ بکە لەناو جۆرەکانی کتێب..." oninput="renderSettings()">
+          <input type="text" id="searchBookTypeInput" class="form-control" style="margin-bottom:0.6rem; padding:0.4rem 0.6rem; font-size:12.5px;" placeholder="🔍 سێرچ..." oninput="renderSettings()">
           <div style="display:flex; gap:0.4rem; margin-bottom:0.8rem;">
-            <input type="text" id="newBookInput" class="form-control" placeholder="ناوی جۆرێکی نوێ...">
+            <input type="text" id="newBookInput" class="form-control" placeholder="ناوی جۆری نوێ...">
             <button class="btn btn-primary btn-sm" onclick="addBookType()">زیادکردن</button>
           </div>
           <div id="bookTypesContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
         </div>
 
+        <!-- پەڕەکان -->
         <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-            <h4>نەوعیەتی پەڕەکان و ئاستەکان</h4>
-            <span style="font-size:11px; color:var(--text-muted);">💡 بە دەست و ماوس ڕایبکێشە بۆ سەروو خوار</span>
+            <h4>نەوعیەتی پەڕەکان</h4>
+            <span style="font-size:11px; color:var(--text-muted);">💡 ڕایبکێشە</span>
           </div>
-          <input type="text" id="searchPageTypeInput" class="form-control" style="margin-bottom:0.6rem; padding:0.4rem 0.6rem; font-size:12.5px;" placeholder="🔍 سێرچ بکە لەناو نەوعیەتی پەڕەکان..." oninput="renderSettings()">
+          <input type="text" id="searchPageTypeInput" class="form-control" style="margin-bottom:0.6rem; padding:0.4rem 0.6rem; font-size:12.5px;" placeholder="🔍 سێرچ..." oninput="renderSettings()">
           <div style="display:flex; gap:0.4rem; margin-bottom:0.8rem;">
-            <input type="text" id="newPageInput" class="form-control" placeholder="ناوی پەڕەیەکی نوێ...">
+            <input type="text" id="newPageInput" class="form-control" placeholder="ناوی پەڕەی نوێ...">
             <button class="btn btn-primary btn-sm" onclick="addPageType()">زیادکردن</button>
           </div>
           <div id="pageTypesContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
+        </div>
+
+        <!-- قاڵبە باوەکان و داواکارییە دووبارەکان (Frequent Templates) -->
+        <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <h4>⚡ قاڵبە باوەکان (Templates)</h4>
+          </div>
+          <p style="font-size:11px; color:var(--text-muted); margin-bottom:0.6rem;">بۆ پڕکردنەوەی خێرای نرخ و جۆری کار بە یەک کلیک</p>
+          <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:0.6rem;">
+            <input type="text" id="tplTitleInput" class="form-control" placeholder="ناوی قاڵب (نموونە: چاپی تیشێرت DTF)">
+            <div style="display:flex; gap:4px;">
+              <input type="text" id="tplPriceInput" class="form-control" placeholder="نرخ (IQD)">
+              <button class="btn btn-primary btn-sm" onclick="addNewTemplate()">زیادکردن</button>
+            </div>
+          </div>
+          <div id="templatesListContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden; max-height:220px; overflow-y:auto;"></div>
         </div>
       </div>
     </div>
@@ -1002,20 +1039,42 @@
     </div>
   </div>
 
-  <!-- مۆداڵی داواکاری -->
+  <!-- مۆداڵی داواکاری (لەگەڵ ئۆتۆ-کۆمپلیت و قاڵبە باوەکان) -->
   <div id="orderModal" class="modal">
     <div class="modal-box">
-      <h3 id="orderModalTitle" style="margin-bottom:0.8rem; color:var(--c-purple);">داواکاری</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+        <h3 id="orderModalTitle" style="color:var(--c-purple);">داواکاری</h3>
+        
+        <!-- هەڵبژاردنی خێرای قاڵبی باو -->
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="font-size:11px; font-weight:bold; color:var(--c-purple);">⚡ قاڵبی خێرا:</span>
+          <select id="quickTemplateSelect" class="form-control" style="font-size:11.5px; padding:0.25rem 0.5rem; width:160px;" onchange="applyOrderTemplate(this.value)">
+            <option value="">هەڵبژاردنی قاڵب...</option>
+          </select>
+        </div>
+      </div>
+
       <input type="hidden" id="editOrderId">
+
+      <!-- کەرتی پێشنیاری کڕیاری دووبارە (Repeat Customer Found) -->
+      <div id="repeatCustomerBanner">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong style="color:var(--c-purple); font-size:12.5px;">🔄 کڕیاری پێشوو دۆزرایەوە: <span id="repeatCustomerName"></span></strong>
+            <div style="font-size:11px; color:#475569;" id="repeatCustomerDetails"></div>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="populateRepeatCustomerData()">⚡ پڕکردنەوەی هەموو زانیارییەکان</button>
+        </div>
+      </div>
       
       <div class="grid-2">
         <div>
-          <label style="font-size:12px; font-weight:bold;">ناوی کڕیار:</label>
-          <input type="text" id="mCustName" class="form-control">
+          <label style="font-size:12px; font-weight:bold;">تەلەفۆن (ڕەقەم بنووسە بۆ سێرچی خۆکار):</label>
+          <input type="text" id="mCustPhone" class="form-control" placeholder="0750..." oninput="checkRepeatCustomer(this.value)">
         </div>
         <div>
-          <label style="font-size:12px; font-weight:bold;">تەلەفۆن:</label>
-          <input type="text" id="mCustPhone" class="form-control">
+          <label style="font-size:12px; font-weight:bold;">ناوی کڕیار:</label>
+          <input type="text" id="mCustName" class="form-control">
         </div>
       </div>
 
@@ -1043,7 +1102,7 @@
           </div>
         </div>
         <div>
-          <label style="font-size:11.5px; font-weight:bold; color:var(--c-green);">بەرواری گەیشتن (تەسلیمکردن بە کڕیار):</label>
+          <label style="font-size:11.5px; font-weight:bold; color:var(--c-green);">بەرواری گەیشتن (تەسلیمکردن):</label>
           <input type="date" id="mDeliveryDate" class="form-control" style="font-size:12px;">
         </div>
       </div>
@@ -1069,7 +1128,7 @@
       </div>
 
       <div style="margin-top:0.4rem;">
-        <label style="font-size:12px; font-weight:bold;">جۆری کتێب:</label>
+        <label style="font-size:12px; font-weight:bold;">جۆری کتێب / بەرهەم:</label>
         <select id="mBookTypeSelect" class="form-control" onchange="toggleCustomBookType(this.value)"></select>
         <input type="text" id="mCustomBookInput" class="form-control" placeholder="ناوی جۆری کتێبەکە بنووسە..." style="display:none; margin-top:4px; border-color:var(--c-purple);">
       </div>
@@ -1087,7 +1146,7 @@
 
       <div class="grid-2" style="margin-top:0.4rem;">
         <div>
-          <label style="font-size:12px; font-weight:bold;">نرخی کتێب (IQD):</label>
+          <label style="font-size:12px; font-weight:bold;">نرخی کتێب / کار (IQD):</label>
           <input type="text" id="mOrderPrice" class="form-control" placeholder="نموونە: ٣٥٠٠٠">
         </div>
         <div>
@@ -1257,7 +1316,7 @@
     </div>
   </div>
 
-  <!-- ناوچەی شاراوە بۆ چاپی پسوولەی فەرمی (Printable Invoice Area) -->
+  <!-- ناوچەی شاراوە بۆ چاپی پسوولەی فەرمی -->
   <div id="printableInvoiceArea" style="display:none; padding:2rem; background:#fff; color:#000;">
     <div style="text-align:center; border-bottom:2px solid #7042f8; padding-bottom:1rem; margin-bottom:1.5rem;">
       <h1 style="color:#7042f8; font-size:26px;">Tiny Hands ✋ تینی هاندس</h1>
@@ -1291,7 +1350,6 @@
       setTimeout(() => { toast.classList.remove('show'); }, 2800);
     }
 
-    // دەنگی ئەلەرم
     let audioCtx = null;
     let alarmInterval = null;
 
@@ -1376,7 +1434,6 @@
       }
     }
 
-    // ناردنی نامەی ڕاستەوخۆ بە واتسئاپ
     function sendWhatsAppNotification(orderId) {
       const o = orders.find(x => x.id === orderId);
       if (!o) return;
@@ -1384,7 +1441,6 @@
       let cleanPhone = cleanNumStr(o.phone || '').replace(/[^0-9]/g, '');
       if (!cleanPhone) return alert('تکایە ژمارەی مۆبایل بۆ ئەم کڕیارە تۆمار بکە!');
 
-      // ڕێکخستنی کۆدی وڵات ئەگەر بە 0750 یان هاوشێوە نووسرابوو
       if (cleanPhone.startsWith('0')) {
         cleanPhone = '964' + cleanPhone.substring(1);
       } else if (!cleanPhone.startsWith('964')) {
@@ -1402,7 +1458,6 @@
       showToast('چاتی واتسئاپ کرایەوە', '💬');
     }
 
-    // چاپکردنی پسوولەی فەرمی
     function printOrderInvoice(orderId) {
       const o = orders.find(x => x.id === orderId);
       if (!o) return;
@@ -1420,11 +1475,11 @@
         </div>
         <hr style="border:1px dashed #ccc; margin:15px 0;">
         <div style="margin-bottom:8px;"><b>ناوی منداڵ:</b> ${o.childName || o.childInfo || '---'} (تەمەن: ${o.childAge || '---'} | ڕەگەز: ${o.childGender || '---'})</div>
-        <div style="margin-bottom:8px;"><b>جۆری کتێب:</b> ${o.bookType}</div>
+        <div style="margin-bottom:8px;"><b>جۆری کتێب/کار:</b> ${o.bookType}</div>
         <div style="margin-bottom:8px;"><b>پەڕەکان:</b> ${(o.selectedPages || []).join('، ')}</div>
         <hr style="border:1px dashed #ccc; margin:15px 0;">
         <div style="display:flex; justify-content:space-between; font-size:16px; margin-top:10px;">
-          <div><b>نرخی کتێب:</b> ${o.price?.toLocaleString()} IQD</div>
+          <div><b>نرخی کار:</b> ${o.price?.toLocaleString()} IQD</div>
           <div><b>گەیاندن:</b> ${o.deliveryFee?.toLocaleString() || 0} IQD</div>
         </div>
         <div style="text-align:center; font-size:18px; color:#7042f8; font-weight:bold; margin-top:15px;">
@@ -1438,7 +1493,6 @@
       pArea.style.display = 'none';
     }
 
-    // سێرچی گشتی
     function handleGlobalSearch() {
       const raw = document.getElementById('globalSearchInput').value.trim();
       const q = raw.toLowerCase();
@@ -1514,7 +1568,7 @@
         resBox.innerHTML = matches.join('');
       } else {
         resBox.style.display = 'block';
-        resBox.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:6px;">هیچ ئەنجامێک لە داتابەیسەکەدا نەدۆزرایەوە</div>';
+        resBox.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:6px;">هیچ ئەنجامێک نەدۆزرایەوە</div>';
       }
     }
 
@@ -1563,8 +1617,16 @@
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
     let pageTypes = ["ستاندارت (فێرکاری گشتی)", "پەڕەی ژمارە و ئەندازە", "پەڕەی ئاژەڵان و ڕەنگەکان", "پەڕەی ناوی تایبەتی منداڵ", "پەڕەی جیاکردنەوەی شێوەکان", "پەڕەی تەقەڵی دەستی", "پەڕەی ژماردنی میوەکان", "پەڕەی کەشوهەوا"];
-    let currentImages = [];
+    
+    // قاڵبە باوەکان
+    let orderTemplates = [
+      { id: 1, title: "کتێبی چالاکی ستاندارد", bookType: "کتێبی چالاکی منداڵان (بوسی بووک)", price: 35000, deliveryFee: 5000, deliveryProfit: 1000 },
+      { id: 2, title: "کتێبی چیرۆکی دەستکاری کراو", bookType: "کتێبی چیرۆکی دەستکاری کراو", price: 25000, deliveryFee: 5000, deliveryProfit: 1000 },
+      { id: 3, title: "چاپی تیشێرت DTF", bookType: "چاپی تیشێرت DTF", price: 15000, deliveryFee: 4000, deliveryProfit: 1000 }
+    ];
 
+    let currentImages = [];
+    let matchedCustomerData = null;
     let customDateRangeActive = false;
 
     let cardOrder = ["card_orders", "card_active", "card_completed", "card_sales", "card_delivery", "card_delivery_profit", "card_net_profit", "card_pending", "card_debt", "card_assets", "card_expenses", "card_avg"];
@@ -1610,6 +1672,7 @@
           workExpenses = JSON.parse(localStorage.getItem('th_work_expenses') || '[]');
           bookTypes = JSON.parse(localStorage.getItem('th_book_types') || JSON.stringify(bookTypes));
           pageTypes = JSON.parse(localStorage.getItem('th_page_types') || JSON.stringify(pageTypes));
+          orderTemplates = JSON.parse(localStorage.getItem('th_order_templates') || JSON.stringify(orderTemplates));
           cardOrder = JSON.parse(localStorage.getItem('th_card_order') || JSON.stringify(cardOrder));
           refreshAllUI();
         } catch(e) {}
@@ -1628,6 +1691,7 @@
           workExpenses = val.workExpenses || [];
           bookTypes = val.bookTypes || bookTypes;
           pageTypes = val.pageTypes || pageTypes;
+          if (val.orderTemplates) orderTemplates = val.orderTemplates;
           if (val.cardOrder) cardOrder = val.cardOrder;
 
           localStorage.setItem('th_orders', JSON.stringify(orders));
@@ -1640,6 +1704,7 @@
           localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
           localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
           localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
+          localStorage.setItem('th_order_templates', JSON.stringify(orderTemplates));
           localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
           
           refreshAllUI();
@@ -1659,12 +1724,142 @@
       localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
       localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
       localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
+      localStorage.setItem('th_order_templates', JSON.stringify(orderTemplates));
       localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
       refreshAllUI();
 
       db.ref('tinyhands_data').set({
-        orders, finances, assets, trash, activityLogs, sharedNotes, workCategories, workExpenses, bookTypes, pageTypes, cardOrder
+        orders, finances, assets, trash, activityLogs, sharedNotes, workCategories, workExpenses, bookTypes, pageTypes, orderTemplates, cardOrder
       });
+    }
+
+    // سێرچی ئۆتۆماتیکی کڕیاری پێشوو
+    function checkRepeatCustomer(phoneVal) {
+      const editId = document.getElementById('editOrderId').value;
+      if (editId) return;
+
+      const banner = document.getElementById('repeatCustomerBanner');
+      const cleanPhone = cleanNumStr(phoneVal);
+
+      if (cleanPhone.length < 7) {
+        banner.style.display = 'none';
+        matchedCustomerData = null;
+        return;
+      }
+
+      const prevOrder = orders.find(o => o.phone && cleanNumStr(o.phone).includes(cleanPhone));
+      if (prevOrder) {
+        matchedCustomerData = prevOrder;
+        document.getElementById('repeatCustomerName').innerText = prevOrder.name;
+        document.getElementById('repeatCustomerDetails').innerText = `شار: ${prevOrder.address || 'دیارینەکراو'} | منداڵ: ${prevOrder.childName || '---'} (${prevOrder.childAge || ''} ساڵ) | دوایین جۆر: ${prevOrder.bookType}`;
+        banner.style.display = 'block';
+      } else {
+        banner.style.display = 'none';
+        matchedCustomerData = null;
+      }
+    }
+
+    // داخڵکردنی زانیاری بە یەک کلیک بەبێ دەستکاری کۆنەکە
+    function populateRepeatCustomerData() {
+      if (!matchedCustomerData) return;
+      const o = matchedCustomerData;
+
+      document.getElementById('mCustName').value = o.name || '';
+      document.getElementById('mOrdererRelation').value = o.ordererRelation || 'دایک';
+      document.getElementById('mCustAddress').value = o.address || '';
+      
+      document.getElementById('mChildName').value = o.childName || '';
+      document.getElementById('mChildAge').value = o.childAge || '';
+      document.getElementById('mChildGender').value = o.childGender || 'کوڕ';
+      
+      document.getElementById('mDeliveryFee').value = o.deliveryFee || '';
+      document.getElementById('mDeliveryProfit').value = o.deliveryProfit || '';
+      document.getElementById('mOrderPrice').value = o.price || '';
+      
+      if (bookTypes.includes(o.bookType)) {
+        document.getElementById('mBookTypeSelect').value = o.bookType;
+      } else {
+        document.getElementById('mBookTypeSelect').value = '__custom__';
+        document.getElementById('mCustomBookInput').style.display = 'block';
+        document.getElementById('mCustomBookInput').value = o.bookType;
+      }
+
+      const targetPages = o.selectedPages || [];
+      document.querySelectorAll('#modalPagesChecklist input[type="checkbox"]').forEach(cb => {
+        cb.checked = targetPages.includes(cb.value);
+      });
+
+      document.getElementById('repeatCustomerBanner').style.display = 'none';
+      showToast('زانیاری کڕیار بە سەرکەوتوویی پڕکرایەوە وەک داواکارییەکی نوێ', '⚡');
+    }
+
+    // قاڵبە باوەکان
+    function applyOrderTemplate(tplId) {
+      if (!tplId) return;
+      const t = orderTemplates.find(x => x.id == tplId);
+      if (!t) return;
+
+      if (t.bookType) {
+        if (bookTypes.includes(t.bookType)) {
+          document.getElementById('mBookTypeSelect').value = t.bookType;
+          document.getElementById('mCustomBookInput').style.display = 'none';
+        } else {
+          document.getElementById('mBookTypeSelect').value = '__custom__';
+          document.getElementById('mCustomBookInput').style.display = 'block';
+          document.getElementById('mCustomBookInput').value = t.bookType;
+        }
+      }
+
+      if (t.price) document.getElementById('mOrderPrice').value = t.price;
+      if (t.deliveryFee) document.getElementById('mDeliveryFee').value = t.deliveryFee;
+      if (t.deliveryProfit) document.getElementById('mDeliveryProfit').value = t.deliveryProfit;
+
+      showToast(`قاڵبی [${t.title}] جێبەجێکرا`, '✨');
+    }
+
+    function addNewTemplate() {
+      const title = document.getElementById('tplTitleInput').value.trim();
+      const price = parseKurdishNumber(document.getElementById('tplPriceInput').value);
+      if (!title) return alert('تکایە ناوی قاڵب بنووسە');
+
+      orderTemplates.push({
+        id: Date.now(),
+        title,
+        bookType: title,
+        price,
+        deliveryFee: 5000,
+        deliveryProfit: 1000
+      });
+
+      document.getElementById('tplTitleInput').value = '';
+      document.getElementById('tplPriceInput').value = '';
+      syncToCloud();
+      showToast('قاڵبی نوێ زیادکرا', '⚡');
+    }
+
+    function deleteTemplate(id) {
+      orderTemplates = orderTemplates.filter(x => x.id !== id);
+      syncToCloud();
+      showToast('قاڵب سڕایەوە', '🗑️');
+    }
+
+    function renderTemplatesList() {
+      const box = document.getElementById('templatesListContainer');
+      box.innerHTML = orderTemplates.map(t => `
+        <div class="sortable-item">
+          <div>
+            <strong>${t.title}</strong>
+            <span style="font-size:11px; color:var(--c-purple); margin-right:4px;">(${t.price?.toLocaleString() || 0} IQD)</span>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="deleteTemplate(${t.id})">سڕینەوە</button>
+        </div>
+      `).join('') || '<div style="padding:8px; text-align:center; font-size:11px; color:#94a3b8;">هیچ قاڵبێک نییە</div>';
+
+      const sel = document.getElementById('quickTemplateSelect');
+      if (sel) {
+        sel.innerHTML = '<option value="">هەڵبژاردنی قاڵب...</option>' + 
+          orderTemplates.map(t => `<option value="${t.id}">${t.title} (${t.price?.toLocaleString()} IQD)</option>`).join('');
+      }
     }
 
     function addSharedNote() {
@@ -1718,7 +1913,7 @@
           </div>
           <span style="color:red; cursor:pointer; font-weight:bold; font-size:13px;" onclick="deleteNoteItem(${n.id})" title="سڕینەوە">×</span>
         </div>
-      `).join('') || '<div style="font-size:11px; color:#94a3b8; text-align:center; padding:10px 0;">هیچ نۆت و تودوویەک نییە</div>';
+      `).join('') || '<div style="font-size:11px; color:#94a3b8; text-align:center; padding:10px 0;">هیچ نۆتێک نییە</div>';
     }
 
     function updateNotifications() {
@@ -1805,6 +2000,7 @@
       renderOrders();
       renderCompleted();
       renderSettings();
+      renderTemplatesList();
       renderFinances();
       renderAssets();
       renderWorkExpenses();
@@ -2220,6 +2416,8 @@
 
     function openOrderModal(id = null) {
       document.getElementById('editOrderId').value = id || '';
+      document.getElementById('repeatCustomerBanner').style.display = 'none';
+      matchedCustomerData = null;
       
       let optionsHtml = bookTypes.map(b => `<option value="${b}">${b}</option>`).join('');
       optionsHtml += `<option value="__custom__" style="color:var(--c-purple); font-weight:bold;">✨ جۆری تر (کەستم بنووسە)...</option>`;
@@ -2227,6 +2425,8 @@
 
       document.getElementById('mCustomBookInput').style.display = 'none';
       document.getElementById('mCustomBookInput').value = '';
+
+      renderTemplatesList();
 
       if(id) {
         const o = orders.find(x => x.id === id);
@@ -2386,7 +2586,6 @@
         syncToCloud(); 
         showToast('قۆناغ نوێکرایەوە', '🔄');
 
-        // پشکنینی خۆکار: ئەگەر هەموو قۆناغەکان تەواو بوون، ئاگاداریی واتسئاپ بدات
         const s = o.stages;
         if (s.data && s.design && s.print && s.ready && s.sent) {
           showToast(`هەموو قۆناغەکانی [${o.name}] تەواو بوو! دوگمەی واتسئاپ لێبدە بۆ نامە ناردن`, '💬');
@@ -2479,7 +2678,6 @@
           </td>
           <td>
             <div style="display:flex; flex-direction:column; gap:3px;">
-              <!-- دوگمەی تایبەتی واتسئاپ -->
               <button class="btn btn-sm btn-whatsapp" title="ناردنی نامەی حازرکراو بە واتسئاپ" onclick="sendWhatsAppNotification(${o.id})">
                 <span>💬 واتسئاپ</span> ${isAllStagesDone ? '⭐' : ''}
               </button>
