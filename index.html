@@ -105,6 +105,54 @@
       white-space: nowrap;
     }
 
+    /* دوگمەی نۆتیفیکەیشن */
+    .notif-btn-wrapper {
+      position: relative;
+      cursor: pointer;
+    }
+    .notif-bell-icon {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+    .notif-badge-count {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      background: var(--c-red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: bold;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .notif-dropdown {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: 42px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+      width: 280px;
+      max-height: 350px;
+      overflow-y: auto;
+      z-index: 200;
+      padding: 0.6rem;
+    }
+
     .container {
       max-width: 1400px;
       margin: 1rem auto;
@@ -198,19 +246,9 @@
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .color-card:active {
-      cursor: grabbing;
-    }
-
-    .color-card.dragging {
-      opacity: 0.4;
-      transform: scale(0.96);
-    }
-
-    .color-card.drag-over {
-      outline: 3px dashed #ffffff;
-      outline-offset: -3px;
-    }
+    .color-card:active { cursor: grabbing; }
+    .color-card.dragging { opacity: 0.4; transform: scale(0.96); }
+    .color-card.drag-over { outline: 3px dashed #ffffff; outline-offset: -3px; }
 
     .color-card .title { font-size: 13.5px; font-weight: 700; margin-bottom: 0.3rem; }
     .color-card .val { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
@@ -309,6 +347,29 @@
       .grid-2 { grid-template-columns: 1fr; }
     }
 
+    /* ستایلی Drag & Drop ی جۆرەکان و پەڕەکان */
+    .sortable-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      background: #fff;
+      cursor: grab;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+    .sortable-item:active { cursor: grabbing; }
+    .sortable-item.dragging { opacity: 0.4; background: #e2e8f0; }
+    .sortable-item.drag-over { border-top: 2px solid var(--c-purple); }
+    .drag-handle {
+      color: var(--text-muted);
+      cursor: grab;
+      margin-left: 8px;
+      font-size: 15px;
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -359,7 +420,6 @@
       margin-left: 4px;
     }
 
-    /* نۆتیفیکەیشن */
     #toastNotification {
       position: fixed;
       bottom: 20px;
@@ -388,13 +448,13 @@
 </head>
 <body>
 
-  <!-- نۆتیفیکەیشن -->
+  <!-- نۆتیفیکەیشنی کاتی -->
   <div id="toastNotification">
     <span id="toastIcon">🔔</span>
     <span id="toastMsg">کردارەکە سەرکەوتوو بوو</span>
   </div>
 
-  <!-- مۆداڵی لۆگین (بەبێ ڕەمزی کاڵکراوە) -->
+  <!-- مۆداڵی لۆگین بەبێ ڕەمزی کاڵکراوە -->
   <div id="loginOverlay">
     <div class="login-box">
       <h2 style="color: var(--c-purple); margin-bottom: 0.4rem;">تینی هاندس ✋</h2>
@@ -428,7 +488,18 @@
       <button class="nav-pill" onclick="switchTab('logsTab')">📜 لۆگ و مێژوو</button>
       <button class="nav-pill trash-pill" onclick="switchTab('trashTab')">🗑️ تەنەکەی خۆڵ (<span id="trashCount">0</span>)</button>
     </div>
+    
     <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <!-- ئایکۆنی نۆتیفیکەیشن و زەنگ لە سەرەوە -->
+      <div class="notif-btn-wrapper" onclick="toggleNotifDropdown(event)">
+        <div class="notif-bell-icon">🔔</div>
+        <div class="notif-badge-count" id="notifBadge">0</div>
+        <div class="notif-dropdown" id="notifDropdown">
+          <strong style="font-size:12px; color:var(--c-purple);">ئاگاداری و نۆتیفیکەیشنەکان:</strong>
+          <div id="notifList" style="margin-top:6px; font-size:11.5px; display:flex; flex-direction:column; gap:4px;"></div>
+        </div>
+      </div>
+
       <div class="user-badge"><span class="cloud-status" title="ئۆنلاینە"></span> <span id="currentUserName">---</span></div>
       <button class="btn btn-danger btn-sm" onclick="logout()">دەرچوون</button>
     </div>
@@ -437,7 +508,6 @@
   <div class="container">
     <!-- داشبۆرد و داتا ئینسایت -->
     <div id="dashboardTab" class="view-panel">
-      
       <div class="filter-bar">
         <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
           <strong style="color:var(--c-purple); font-size:14px;">📅 داتا ئینسایت (دیاریکردنی کات):</strong>
@@ -453,7 +523,6 @@
         </div>
       </div>
 
-      <!-- ئاماری بارەکانی مانگانە -->
       <div class="chart-container">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
           <strong style="font-size:13px; color:var(--text);">📊 ئاماری فرۆشتنی مانگانە</strong>
@@ -462,7 +531,6 @@
         <div class="chart-bars" id="monthlyChartContainer"></div>
       </div>
 
-      <!-- کارتی ئامارەکان بە سیستەمی ڕاکێشان و بەردان (Drag & Drop) -->
       <div class="colorful-grid" id="mainCardsGrid"></div>
     </div>
 
@@ -527,25 +595,44 @@
       </div>
     </div>
 
-    <!-- جۆرەکان -->
+    <!-- جۆرەکان و نەوعیەتی پەڕەکان (بە سێرچ و Drag & Drop) -->
     <div id="settingsTab" class="view-panel" style="display: none;">
       <div class="grid-2">
-        <div style="background:#fff; padding:1rem; border-radius:12px; border:1px solid var(--border);">
-          <h4>جۆرەکانی داواکاری / کتێب</h4>
-          <div style="display:flex; gap:0.4rem; margin:0.8rem 0;">
-            <input type="text" id="newBookInput" class="form-control" placeholder="ناوی جۆرەکە...">
+        
+        <!-- جۆرەکانی کتێب -->
+        <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <h4>جۆرەکانی داواکاری / کتێب</h4>
+            <span style="font-size:11px; color:var(--text-muted);">💡 بە دەست و ماوس ڕایبکێشە بۆ سەروو خوار</span>
+          </div>
+
+          <!-- خانەی سێرچ -->
+          <input type="text" id="searchBookTypeInput" class="form-control" style="margin-bottom:0.6rem; padding:0.4rem 0.6rem; font-size:12.5px;" placeholder="🔍 سێرچ بکە لەناو جۆرەکانی کتێب..." oninput="renderSettings()">
+
+          <div style="display:flex; gap:0.4rem; margin-bottom:0.8rem;">
+            <input type="text" id="newBookInput" class="form-control" placeholder="ناوی جۆرێکی نوێ...">
             <button class="btn btn-primary btn-sm" onclick="addBookType()">زیادکردن</button>
           </div>
-          <div id="bookTypesContainer"></div>
+          <div id="bookTypesContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
         </div>
-        <div style="background:#fff; padding:1rem; border-radius:12px; border:1px solid var(--border);">
-          <h4>نەوعیەتی پەڕەکان و ئاستەکان</h4>
-          <div style="display:flex; gap:0.4rem; margin:0.8rem 0;">
-            <input type="text" id="newPageInput" class="form-control" placeholder="ناوی پەڕەکە...">
+
+        <!-- نەوعیەتی پەڕەکان -->
+        <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <h4>نەوعیەتی پەڕەکان و ئاستەکان</h4>
+            <span style="font-size:11px; color:var(--text-muted);">💡 بە دەست و ماوس ڕایبکێشە بۆ سەروو خوار</span>
+          </div>
+
+          <!-- خانەی سێرچ -->
+          <input type="text" id="searchPageTypeInput" class="form-control" style="margin-bottom:0.6rem; padding:0.4rem 0.6rem; font-size:12.5px;" placeholder="🔍 سێرچ بکە لەناو نەوعیەتی پەڕەکان..." oninput="renderSettings()">
+
+          <div style="display:flex; gap:0.4rem; margin-bottom:0.8rem;">
+            <input type="text" id="newPageInput" class="form-control" placeholder="ناوی پەڕەیەکی نوێ...">
             <button class="btn btn-primary btn-sm" onclick="addPageType()">زیادکردن</button>
           </div>
-          <div id="pageTypesContainer"></div>
+          <div id="pageTypesContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
         </div>
+
       </div>
     </div>
 
@@ -593,7 +680,7 @@
       </div>
     </div>
 
-    <!-- بەشی نوێ: لۆگ و مێژوو -->
+    <!-- لۆگ و مێژوو -->
     <div id="logsTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
         <h3>📜 تۆماری جووڵە و مێژوو (Activity Logs)</h3>
@@ -614,7 +701,7 @@
       </div>
     </div>
 
-    <!-- تەنەکەی خۆڵ (بە سڕینەوەی دانە بە دانە) -->
+    <!-- تەنەکەی خۆڵ -->
     <div id="trashTab" class="view-panel" style="display: none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
         <h3 style="color:var(--c-red);">تەنەکەی خۆڵ</h3>
@@ -871,6 +958,17 @@
       setTimeout(() => { toast.classList.remove('show'); }, 2800);
     }
 
+    function toggleNotifDropdown(e) {
+      e.stopPropagation();
+      const dd = document.getElementById('notifDropdown');
+      dd.style.display = (dd.style.display === 'block') ? 'none' : 'block';
+    }
+
+    document.addEventListener('click', () => {
+      const dd = document.getElementById('notifDropdown');
+      if(dd) dd.style.display = 'none';
+    });
+
     const firebaseConfig = {
       apiKey: "AIzaSyCSUDoeRxAby4H-3T_5hFpN83xavJj0WGo",
       authDomain: "tiny-hands-9a93a.firebaseapp.com",
@@ -990,6 +1088,31 @@
       });
     }
 
+    function updateNotifications() {
+      const unpaids = orders.filter(o => o.payment === 'unpaid');
+      const inProgress = orders.filter(o => !o.completed);
+      const totalAlerts = unpaids.length;
+
+      document.getElementById('notifBadge').innerText = totalAlerts;
+      const list = document.getElementById('notifList');
+      if (totalAlerts === 0 && inProgress.length === 0) {
+        list.innerHTML = '<span style="color:var(--text-muted);">هیچ ئاگادارییەکی نوێ نییە</span>';
+        return;
+      }
+
+      let html = '';
+      if (unpaids.length > 0) {
+        html += `<div style="color:var(--c-red); font-weight:bold;">⚠️ ${unpaids.length} داواکاری پارەی نەدراوە</div>`;
+        unpaids.slice(0, 4).forEach(u => {
+          html += `<div style="background:#fff1f2; padding:3px 6px; border-radius:5px; font-size:11px;">کڕیار: ${u.name} (${u.price.toLocaleString()} IQD)</div>`;
+        });
+      }
+      if (inProgress.length > 0) {
+        html += `<div style="color:var(--c-blue); font-weight:bold; margin-top:4px;">📦 ${inProgress.length} داواکاری چالاک لە قۆناغدان</div>`;
+      }
+      list.innerHTML = html;
+    }
+
     function refreshAllUI() {
       renderCardsGrid();
       renderOrders();
@@ -1001,6 +1124,7 @@
       renderTrash();
       renderLogs();
       calculateStats();
+      updateNotifications();
     }
 
     function login() {
@@ -1035,8 +1159,9 @@
       if (found) found.classList.add('active');
     }
 
-    /* سیستەمی Drag & Drop ی سروشتی بە ماوس و دەست (سەر، خوار، ڕاست، چەپ) */
+    /* سیستەمی Drag & Drop ی کارتەکان */
     let draggedCardKey = null;
+    let isDragging = false;
 
     function renderCardsGrid() {
       const grid = document.getElementById('mainCardsGrid');
@@ -1060,8 +1185,6 @@
       }).join('');
     }
 
-    let isDragging = false;
-
     function handleDragStart(e) {
       isDragging = true;
       draggedCardKey = e.currentTarget.getAttribute('data-key');
@@ -1079,9 +1202,7 @@
       }
     }
 
-    function handleDragLeave(e) {
-      e.currentTarget.classList.remove('drag-over');
-    }
+    function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
 
     function handleDrop(e) {
       e.preventDefault();
@@ -1109,6 +1230,97 @@
       if (item && item.onClick) {
         eval(item.onClick);
       }
+    }
+
+    /* سیستەمی سێرچ و Drag & Drop بۆ جۆرەکانی کتێب و پەڕەکان */
+    let draggedListType = null;
+    let draggedListIndex = null;
+
+    function handleListDragStart(type, idx, e) {
+      draggedListType = type;
+      draggedListIndex = idx;
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleListDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleListDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleListDrop(type, targetIdx, e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      document.querySelectorAll('.sortable-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+
+      if (draggedListType === type && draggedListIndex !== null && draggedListIndex !== targetIdx) {
+        if (type === 'books') {
+          const item = bookTypes.splice(draggedListIndex, 1)[0];
+          bookTypes.splice(targetIdx, 0, item);
+          syncToCloud();
+          showToast('ڕیزبەندی جۆری کتێب پاشەکەوت کرا', '🔄');
+        } else if (type === 'pages') {
+          const item = pageTypes.splice(draggedListIndex, 1)[0];
+          pageTypes.splice(targetIdx, 0, item);
+          syncToCloud();
+          showToast('ڕیزبەندی پەڕەکان پاشەکەوت کرا', '🔄');
+        }
+      }
+      draggedListType = null;
+      draggedListIndex = null;
+    }
+
+    function renderSettings() {
+      const bookQuery = (document.getElementById('searchBookTypeInput')?.value || '').trim().toLowerCase();
+      const pageQuery = (document.getElementById('searchPageTypeInput')?.value || '').trim().toLowerCase();
+
+      // جۆرەکانی کتێب
+      const bookContainer = document.getElementById('bookTypesContainer');
+      bookContainer.innerHTML = bookTypes.map((b, i) => {
+        if (bookQuery && !b.toLowerCase().includes(bookQuery)) return '';
+        return `
+        <div class="sortable-item" 
+             draggable="true" 
+             ondragstart="handleListDragStart('books', ${i}, event)" 
+             ondragover="handleListDragOver(event)" 
+             ondragleave="handleListDragLeave(event)" 
+             ondrop="handleListDrop('books', ${i}, event)">
+          <div style="display:flex; align-items:center;">
+            <span class="drag-handle" title="ڕایبکێشە">☰</span>
+            <span style="font-weight:bold;">${b}</span>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <button class="btn btn-sm btn-secondary" onclick="editBookType(${i})">دەستکاری</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteBookType(${i})">سڕینەوە</button>
+          </div>
+        </div>`;
+      }).join('') || '<div style="padding:10px; text-align:center; color:#94a3b8; font-size:12px;">هیچ جۆرێک نەدۆزرایەوە</div>';
+
+      // نەوعیەتی پەڕەکان
+      const pageContainer = document.getElementById('pageTypesContainer');
+      pageContainer.innerHTML = pageTypes.map((p, i) => {
+        if (pageQuery && !p.toLowerCase().includes(pageQuery)) return '';
+        return `
+        <div class="sortable-item" 
+             draggable="true" 
+             ondragstart="handleListDragStart('pages', ${i}, event)" 
+             ondragover="handleListDragOver(event)" 
+             ondragleave="handleListDragLeave(event)" 
+             ondrop="handleListDrop('pages', ${i}, event)">
+          <div style="display:flex; align-items:center;">
+            <span class="drag-handle" title="ڕایبکێشە">☰</span>
+            <span style="font-weight:bold;">${p}</span>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <button class="btn btn-sm btn-secondary" onclick="editPageType(${i})">دەستکاری</button>
+            <button class="btn btn-sm btn-danger" onclick="deletePageType(${i})">سڕینەوە</button>
+          </div>
+        </div>`;
+      }).join('') || '<div style="padding:10px; text-align:center; color:#94a3b8; font-size:12px;">هیچ پەڕەیەک نەدۆزرایەوە</div>';
     }
 
     // لۆگ و مێژوو
@@ -1154,6 +1366,8 @@
       if (t.type === 'داواکاری') orders.unshift(t.originalItem);
       if (t.type === 'دارایی') finances.unshift(t.originalItem);
       if (t.type === 'ئامێر') assets.unshift(t.originalItem);
+      if (t.type === 'جۆری کتێب') bookTypes.push(t.originalItem);
+      if (t.type === 'نەوعیەتی پەڕە') pageTypes.push(t.originalItem);
       logAction('گەڕاندنەوە لە خۆڵ', `بابەتی [${t.title}] گەڕێندرایەوە`);
       trash.splice(idx, 1);
       syncToCloud();
@@ -1552,7 +1766,11 @@
     }
     function editBookType(i) {
       const u = prompt('دەستکاری ناوی کتێب:', bookTypes[i]);
-      if(u && u.trim() !== '') { bookTypes[i] = u.trim(); syncToCloud(); }
+      if(u && u.trim() !== '') { 
+        bookTypes[i] = u.trim(); 
+        syncToCloud(); 
+        showToast('جۆری کتێب دەستکاری کرا', '✏️');
+      }
     }
     function deleteBookType(i) {
       const item = bookTypes[i];
@@ -1572,33 +1790,16 @@
     }
     function editPageType(i) {
       const u = prompt('دەستکاری ناوی پەڕە:', pageTypes[i]);
-      if(u && u.trim() !== '') { pageTypes[i] = u.trim(); syncToCloud(); }
+      if(u && u.trim() !== '') { 
+        pageTypes[i] = u.trim(); 
+        syncToCloud(); 
+        showToast('پەڕە دەستکاری کرا', '✏️');
+      }
     }
     function deletePageType(i) {
       const item = pageTypes[i];
       pageTypes.splice(i, 1);
       moveToTrash('نەوعیەتی پەڕە', item, item);
-    }
-
-    function renderSettings() {
-      document.getElementById('bookTypesContainer').innerHTML = bookTypes.map((b, i) => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
-          <span>${b}</span>
-          <div style="display:flex; gap:4px;">
-            <button class="btn btn-sm btn-secondary" onclick="editBookType(${i})">دەستکاری</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteBookType(${i})">سڕینەوە</button>
-          </div>
-        </div>
-      `).join('');
-      document.getElementById('pageTypesContainer').innerHTML = pageTypes.map((p, i) => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border); font-size:12.5px;">
-          <span>${p}</span>
-          <div style="display:flex; gap:4px;">
-            <button class="btn btn-sm btn-secondary" onclick="editPageType(${i})">دەستکاری</button>
-            <button class="btn btn-sm btn-danger" onclick="deletePageType(${i})">سڕینەوە</button>
-          </div>
-        </div>
-      `).join('');
     }
 
     function openFinanceModal(id = null) {
