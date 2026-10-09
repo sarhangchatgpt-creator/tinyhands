@@ -2610,8 +2610,11 @@
       if (names.length > 1) {
         const opts = (sel) => `<option value="">هەموو کتێبەکان</option>` + names.map(n => `<option value="${n.replace(/"/g, '&quot;')}" ${sel === n ? 'selected' : ''}>${n}</option>`).join('');
         const rows = currentAttachments.map((a, i) => `
-          <div style="display:flex; align-items:center; gap:6px; font-size:11px; width:100%; margin-top:2px;">
-            <span style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${a.kind === 'pdf' ? '📄' : '🖼️'} ${a.name || ''}</span>
+          <div title="${(a.name || '').replace(/"/g, '&quot;')}" style="display:flex; align-items:center; gap:6px; font-size:11px; width:100%; margin-top:4px;">
+            ${a.kind === 'pdf'
+              ? `<span style="min-width:34px; height:34px; border-radius:4px; background:#fee2e2; border:1px solid #fca5a5; font-size:9px; display:inline-flex; flex-direction:column; align-items:center; justify-content:center;"><b>PDF</b>${a.pages} پ</span>`
+              : (a.thumb ? `<img src="${a.thumb}" style="width:34px; height:34px; border-radius:4px; object-fit:cover; border:1px solid #cbd5e1;">` : `<span style="min-width:34px; height:34px; border-radius:4px; background:#e0f2fe; display:inline-flex; align-items:center; justify-content:center;">🖼️</span>`)}
+            <b>#${i + 1}</b>
             <span>←</span>
             <select class="form-control" style="width:auto; padding:2px 6px; font-size:11px;" onchange="currentAttachments[${i}].target = this.value">${opts(a.target || '')}</select>
           </div>`).join('');
