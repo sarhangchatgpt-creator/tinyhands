@@ -594,7 +594,6 @@
       text-decoration: line-through;
     }
 
-    /* پەنێڵی پێشنیاری کڕیار */
     #repeatCustomerBanner {
       display: none;
       background: #eef2ff;
@@ -932,7 +931,7 @@
           <div id="pageTypesContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
         </div>
 
-        <!-- قاڵبە باوەکان و داواکارییە دووبارەکان (Frequent Templates) -->
+        <!-- قاڵبە باوەکان -->
         <div style="background:#fff; padding:1.2rem; border-radius:14px; border:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
             <h4>⚡ قاڵبە باوەکان (Templates)</h4>
@@ -1039,13 +1038,12 @@
     </div>
   </div>
 
-  <!-- مۆداڵی داواکاری (لەگەڵ ئۆتۆ-کۆمپلیت و قاڵبە باوەکان) -->
+  <!-- مۆداڵی داواکاری -->
   <div id="orderModal" class="modal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
         <h3 id="orderModalTitle" style="color:var(--c-purple);">داواکاری</h3>
         
-        <!-- هەڵبژاردنی خێرای قاڵبی باو -->
         <div style="display:flex; align-items:center; gap:4px;">
           <span style="font-size:11px; font-weight:bold; color:var(--c-purple);">⚡ قاڵبی خێرا:</span>
           <select id="quickTemplateSelect" class="form-control" style="font-size:11.5px; padding:0.25rem 0.5rem; width:160px;" onchange="applyOrderTemplate(this.value)">
@@ -1056,7 +1054,6 @@
 
       <input type="hidden" id="editOrderId">
 
-      <!-- کەرتی پێشنیاری کڕیاری دووبارە (Repeat Customer Found) -->
       <div id="repeatCustomerBanner">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
@@ -1493,6 +1490,41 @@
       pArea.style.display = 'none';
     }
 
+    // فەنکشنی ناردنی فەرمان بۆ پایتۆن بۆ دروستکردنی کتێب بە شێوەی خۆکار
+    async function autoGenerateBookPDF(orderId) {
+      const o = orders.find(x => x.id === orderId);
+      if (!o) return;
+
+      const childName = o.childName || o.childInfo || o.name;
+      if (!childName) {
+        alert("تکایە سەرەتا ناوی منداڵەکە لە داواکارییەکەدا بنووسە!");
+        return;
+      }
+
+      showToast(`کتێبی [${childName}] لە دروستبووندایە...`, '⏳');
+
+      try {
+        const res = await fetch('http://127.0.0.1:5000/generate_book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            childName: childName,
+            selectedPages: o.selectedPages || []
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          showToast(`فایلی ${data.fileName} بە سەرکەوتوویی دروستکرا!`, '🎉');
+          if (!o.stages.design) toggleStage(orderId, 'design');
+        } else {
+          alert("هەڵە لە دروستکردنی کتێب: " + data.message);
+        }
+      } catch (err) {
+        alert("پەیوەندی لەگەڵ پایتۆن نەبەسترا! دڵنیابە لە پەنجەرەی CMD فایلی Book_Automation.py کارپێکراوە (py Book_Automation.py).");
+      }
+    }
+
     function handleGlobalSearch() {
       const raw = document.getElementById('globalSearchInput').value.trim();
       const q = raw.toLowerCase();
@@ -1616,9 +1648,21 @@
     let workCategories = ["حیبر", "وەرەقە و لامینەیت", "فریلانسەر و حەقی دەست"];
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
-    let pageTypes = ["ستاندارت (فێرکاری گشتی)", "پەڕەی ژمارە و ئەندازە", "پەڕەی ئاژەڵان و ڕەنگەکان", "پەڕەی ناوی تایبەتی منداڵ", "پەڕەی جیاکردنەوەی شێوەکان", "پەڕەی تەقەڵی دەستی", "پەڕەی ژماردنی میوەکان", "پەڕەی کەشوهەوا"];
     
-    // قاڵبە باوەکان
+    // لیستی ٢٩ پەڕە نوێیەکەت ڕێک بە ناوی خۆیان
+    let pageTypes = [
+      "ستاندارت (فێرکاری گشتی)", "پەڕەی ژمارە", "ئاژەڵان", "ئەندازە", "میوە", 
+      "ڕەنگەکان ١", "دددان شۆردن", "ڕەنگەکان ٢", "ئەندازە پڕکردنەوە (ئەوەی ناو سێوەکان)", 
+      "دایناسۆر", "شۆفڵ و حەفارە", "سەیارەی بەڕەل", "سەیارەی ناو گەراج (بۆڕەنگەکان)", 
+      "شاری هەنگەکان", "دەموچاو ڕێکخستن", "وێنەی منداڵ ١", "وێنەی منداڵ ٢", 
+      "وێنەی منداڵ ٣", "وێنەی منداڵ ٤", "وێنەی منداڵ ٥", "وێنەی منداڵ ٦", 
+      "وێنەی منداڵ ٧", "پیتی ئینگلیزی ١", "پیتی ئینگلیزی ٢", "ئاژەڵی ماڵی", 
+      "سەوزەوات", "ژمارەی کوردی", "ژمارەی ئینگلیزی", "ئەندامی جەستە", 
+      "ئەندامانی خێزان", "دانانەوەی شەیبی سەیارە (کوڕانە)", "دانانەوەی شتی کچانە (ناوماڵ)", 
+      "دانانەوەی بەتەڵەکان (سپایدەرمان کوڕانە)", "دانانەوەی ساندریلا (کچانە)", 
+      "تۆپی پێ", "دەموچاو ڕێکخستن (کچانە)"
+    ];
+    
     let orderTemplates = [
       { id: 1, title: "کتێبی چالاکی ستاندارد", bookType: "کتێبی چالاکی منداڵان (بوسی بووک)", price: 35000, deliveryFee: 5000, deliveryProfit: 1000 },
       { id: 2, title: "کتێبی چیرۆکی دەستکاری کراو", bookType: "کتێبی چیرۆکی دەستکاری کراو", price: 25000, deliveryFee: 5000, deliveryProfit: 1000 },
@@ -1733,7 +1777,6 @@
       });
     }
 
-    // سێرچی ئۆتۆماتیکی کڕیاری پێشوو
     function checkRepeatCustomer(phoneVal) {
       const editId = document.getElementById('editOrderId').value;
       if (editId) return;
@@ -1759,7 +1802,6 @@
       }
     }
 
-    // داخڵکردنی زانیاری بە یەک کلیک بەبێ دەستکاری کۆنەکە
     function populateRepeatCustomerData() {
       if (!matchedCustomerData) return;
       const o = matchedCustomerData;
@@ -1793,7 +1835,6 @@
       showToast('زانیاری کڕیار بە سەرکەوتوویی پڕکرایەوە وەک داواکارییەکی نوێ', '⚡');
     }
 
-    // قاڵبە باوەکان
     function applyOrderTemplate(tplId) {
       if (!tplId) return;
       const t = orderTemplates.find(x => x.id == tplId);
@@ -2678,13 +2719,17 @@
           </td>
           <td>
             <div style="display:flex; flex-direction:column; gap:3px;">
+              <!-- دوگمەی ڕەبتکراوی پایتۆن بۆ دروستکردنی کتێب -->
+              <button class="btn btn-sm btn-primary" title="دروستکردنی خۆکاری PDF بە پایتۆن" onclick="autoGenerateBookPDF(${o.id})">
+                🎨 دروستکردنی کتێب
+              </button>
               <button class="btn btn-sm btn-whatsapp" title="ناردنی نامەی حازرکراو بە واتسئاپ" onclick="sendWhatsAppNotification(${o.id})">
                 <span>💬 واتسئاپ</span> ${isAllStagesDone ? '⭐' : ''}
               </button>
               <button class="btn btn-sm btn-secondary" title="چاپی پسوولەی داواکاری" onclick="printOrderInvoice(${o.id})">🖨️ پسوولە</button>
               <button class="btn btn-sm btn-success" onclick="markAsCompleted(${o.id})">تەواو</button>
               <button class="btn btn-sm btn-secondary" onclick="openOrderModal(${o.id})">دەستکاری</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">سڕینەوە</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id})">سڕینەوە</button>
             </div>
           </td>
         </tr>`;
