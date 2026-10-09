@@ -1106,8 +1106,8 @@
 
       <div class="grid-2" style="margin-top:0.4rem;">
         <div>
-          <label style="font-size:12px; font-weight:bold;">ناوی منداڵ:</label>
-          <input type="text" id="mChildName" class="form-control" placeholder="ناوی منداڵ">
+          <label style="font-size:12px; font-weight:bold;">ناوی منداڵ (یان منداڵەکان بە فاریزە):</label>
+          <input type="text" id="mChildName" class="form-control" placeholder="نموونە: ڕادوان ، ئاراس">
         </div>
         <div style="display:flex; gap:6px;">
           <div style="flex:1;">
@@ -1490,7 +1490,7 @@
       pArea.style.display = 'none';
     }
 
-    // فەنکشنی ناردنی فەرمان بۆ پایتۆن بۆ دروستکردنی کتێب بە شێوەی خۆکار
+    // فەنکشنی ناردنی فەرمان بۆ پایتۆن بۆ دروستکردنی کتێب بە شێوەی خۆکار (تەنانەت فرە-کتێبیش بێت)
     async function autoGenerateBookPDF(orderId) {
       const o = orders.find(x => x.id === orderId);
       if (!o) return;
@@ -1515,7 +1515,7 @@
 
         const data = await res.json();
         if (data.success) {
-          showToast(`فایلی ${data.fileName} بە سەرکەوتوویی دروستکرا!`, '🎉');
+          showToast(`فایلی (${data.fileName}) بە سەرکەوتوویی دروستکرا!`, '🎉');
           if (!o.stages.design) toggleStage(orderId, 'design');
         } else {
           alert("هەڵە لە دروستکردنی کتێب: " + data.message);
@@ -1649,18 +1649,19 @@
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
     
-    // لیستی ٢٩ پەڕە نوێیەکەت ڕێک بە ناوی خۆیان
+    // لیستی ٢٩ پەڕە ڕاستەقینەکەی master_book.pdf بە ناوی خاوێنکراوە
     let pageTypes = [
-      "ستاندارت (فێرکاری گشتی)", "پەڕەی ژمارە", "ئاژەڵان", "ئەندازە", "میوە", 
-      "ڕەنگەکان ١", "دددان شۆردن", "ڕەنگەکان ٢", "ئەندازە پڕکردنەوە (ئەوەی ناو سێوەکان)", 
-      "دایناسۆر", "شۆفڵ و حەفارە", "سەیارەی بەڕەل", "سەیارەی ناو گەراج (بۆڕەنگەکان)", 
-      "شاری هەنگەکان", "دەموچاو ڕێکخستن", "وێنەی منداڵ ١", "وێنەی منداڵ ٢", 
-      "وێنەی منداڵ ٣", "وێنەی منداڵ ٤", "وێنەی منداڵ ٥", "وێنەی منداڵ ٦", 
-      "وێنەی منداڵ ٧", "پیتی ئینگلیزی ١", "پیتی ئینگلیزی ٢", "ئاژەڵی ماڵی", 
-      "سەوزەوات", "ژمارەی کوردی", "ژمارەی ئینگلیزی", "ئەندامی جەستە", 
-      "ئەندامانی خێزان", "دانانەوەی شەیبی سەیارە (کوڕانە)", "دانانەوەی شتی کچانە (ناوماڵ)", 
-      "دانانەوەی بەتەڵەکان (سپایدەرمان کوڕانە)", "دانانەوەی ساندریلا (کچانە)", 
-      "تۆپی پێ", "دەموچاو ڕێکخستن (کچانە)"
+      "میوەکان", "سەوزەواتەکان", "ئەندامی جەستە (کچانە)", "ئەندامانی خێزان", 
+      "گیاندارەکان", "ئاژەڵە ماڵییەکان", "شێوە ئەندازەییەکان", "ژمارەی کوردی", 
+      "ئەندازە پڕکردنەوە (ئەوەی ناو سێوەکان)", "دددان شۆردن (کچانە)", "دددان شۆردن (کوڕانە)", 
+      "شاری هەنگەکان", "دانانەوەی شتی کچانە (ناوماڵ)", "دایناسۆرەکان", 
+      "سەیارەی ناو گەراج (بۆڕەنگەکان)", "سەیارەی بەڕەل", "پیتی ئینگلیزی ١", 
+      "پیتی ئینگلیزی ٢", "دانانەوەی شەیبی سەیارە (کوڕانە)", "ڕەنگەکان ١", 
+      "ڕەنگەکان ٢", "ژمارەی ئینگلیزی", "شۆفڵ و حەفارە", "مۆتۆڕسکیل (پۆلیس)", 
+      "ئەندامی جەستە (کوڕانە)", "تۆپی پێ", "دەموچاو ڕێکخستن", 
+      "دانانەوەی بەتەڵەکان (سپایدەرمان کوڕانە)", "دانانەوەی ساندریلا (کچانە)",
+      "وێنەی منداڵ ١", "وێنەی منداڵ ٢", "وێنەی منداڵ ٣", "وێنەی منداڵ ٤",
+      "وێنەی منداڵ ٥", "وێنەی منداڵ ٦", "وێنەی منداڵ ٧"
     ];
     
     let orderTemplates = [
@@ -2719,7 +2720,6 @@
           </td>
           <td>
             <div style="display:flex; flex-direction:column; gap:3px;">
-              <!-- دوگمەی ڕەبتکراوی پایتۆن بۆ دروستکردنی کتێب -->
               <button class="btn btn-sm btn-primary" title="دروستکردنی خۆکاری PDF بە پایتۆن" onclick="autoGenerateBookPDF(${o.id})">
                 🎨 دروستکردنی کتێب
               </button>
@@ -2752,7 +2752,7 @@
               <button class="btn btn-sm btn-whatsapp" onclick="sendWhatsAppNotification(${o.id})">💬 واتسئاپ</button>
               <button class="btn btn-sm btn-secondary" onclick="printOrderInvoice(${o.id})">🖨️ پسوولە</button>
               <button class="btn btn-sm btn-warning" onclick="orders.find(x=>x.id===${o.id}).completed=false;syncToCloud();showToast('چالاککرایەوە','🔄');">چالاککردنەوە</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteOrder(${o.id})">سڕینەوە</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteOrder(${o.id})">سڕینەوە</button>
             </div>
           </td>
         </tr>`;
