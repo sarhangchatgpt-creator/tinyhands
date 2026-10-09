@@ -2603,6 +2603,7 @@
       status.textContent = ok ? `✅ ${ok} وێنە/فایل بە سەرکەوتوویی بارکرا.` : '';
       input.value = '';
     }
+function removeAttachment(i) {
       const a = currentAttachments.splice(i, 1)[0];
       if (a) {
         if (a.isNew) {   // لە هەمان کرداردا ئەپلۆدکراوە -> دەستبەجێ دەسڕدرێتەوە
