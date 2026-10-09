@@ -928,6 +928,7 @@
             <input type="text" id="newPageInput" class="form-control" placeholder="ناوی پەڕەی نوێ...">
             <button class="btn btn-primary btn-sm" onclick="addPageType()">زیادکردن</button>
           </div>
+          <button class="btn btn-secondary btn-sm" style="margin-bottom:0.6rem;" onclick="resetPageTypesToMaster()">♻️ گەڕاندنەوەی لیستی ٢٦ پەڕەی ستاندارد</button>
           <div id="pageTypesContainer" style="border:1px solid var(--border); border-radius:8px; overflow:hidden;"></div>
         </div>
 
@@ -1495,28 +1496,40 @@
       const o = orders.find(x => x.id === orderId);
       if (!o) return;
 
-      const childName = o.childName || o.childInfo || o.name;
-      if (!childName) {
+      const rawName = (o.childName || o.childInfo || o.name || '').trim();
+      if (!rawName) {
         alert("تکایە سەرەتا ناوی منداڵەکە لە داواکارییەکەدا بنووسە!");
         return;
       }
+      if (!o.selectedPages || o.selectedPages.length === 0) {
+        if (!confirm("هیچ پەڕەیەک هەڵنەبژێردراوە، تەنها بەرگ دروست دەکرێت. بەردەوام بم؟")) return;
+      }
 
-      showToast(`کتێبی [${childName}] لە دروستبووندایە...`, '⏳');
+      // فرە-کتێب: ناوەکان جیادەکرێنەوە (فاریزە، خەت، یان (و)). تەنها فایلەکان زۆر دەبن، داتای دارایی هەر یەک جارە.
+      const childNames = rawName.split(/\s*[,،\/\\-]\s*|\s+و\s+/).map(n => n.trim()).filter(Boolean);
+
+      showToast(childNames.length > 1
+        ? `${childNames.length} کتێب (${childNames.join('، ')}) لە دروستبووندایە...`
+        : `کتێبی [${childNames[0]}] لە دروستبووندایە...`, '⏳');
 
       try {
         const res = await fetch('http://127.0.0.1:5000/generate_book', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            childName: childName,
+            childName: rawName,
+            childNames: childNames,
             selectedPages: o.selectedPages || []
           })
         });
 
         const data = await res.json();
         if (data.success) {
-          showToast(`فایلی (${data.fileName}) بە سەرکەوتوویی دروستکرا!`, '🎉');
-          if (!o.stages.design) toggleStage(orderId, 'design');
+          showToast(`${data.count || 1} فایل دروستکرا: ${data.fileName}`, '🎉');
+          if (data.missingPages && data.missingPages.length) {
+            alert("ئاگاداری: ئەم پەڕانە لە master_book.pdf نەدۆزرانەوە و نەهاتنە ناو کتێبەکە:\n" + data.missingPages.join('\n'));
+          }
+          if (o.stages && !o.stages.design) toggleStage(orderId, 'design');
         } else {
           alert("هەڵە لە دروستکردنی کتێب: " + data.message);
         }
@@ -1649,17 +1662,51 @@
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
     
-    // لیستی تەواوی ٢٦ پەڕەی هەڵبژاردە بۆ ٢٧ لاپەڕەی ناو PDFەکە (بەبێ بەرگ)
-    let pageTypes = [
+    // لیستی ٢٦ پەڕەی هەڵبژاردە = لاپەڕەی ٢ تا ٢٧ی master_book.pdf (لاپەڕەی ١ بەرگە و خۆکارانە دێت)
+    // ناوەکان ڕێک هاوتای PAGE_MAP لە Book_Automation.py ن
+    const MASTER_PAGE_TYPES = [
       "میوەکان", "سەوزەواتەکان", "ئەندامی جەستە (کچانە)", "ئەندامانی خێزان",
       "گیاندارەکان", "ئاژەڵە ماڵییەکان", "شێوە ئەندازەییەکان", "ژمارەی کوردی",
-      "ئەندازە پڕکردنەوە (ناو سێوەکان)", "شۆفڵ و حەفارە", "ددان شۆردن (کچانە)",
+      "ئەندازە پڕکردنەوە (ناو سێوەکان)", "ورگ", "ددان شۆردن (کچانە)",
       "شاری هەنگەکان", "دانانەوەی شتی کچانە (ناوماڵ)", "دایناسۆرەکان",
       "سەیارەی ناو گەراج (بۆڕەنگەکان)", "سەیارەی بەڕەل", "پیتی ئینگلیزی ١",
-      "پیتی ئینگلیزی ٢", "تابلۆی ژمارەکان", "ڕەنگەکان ١", "ڕەنگەکان ٢",
-      "ژمارەی ئینگلیزی", "مۆتۆڕسکیل (پۆلیس)", "ددان شۆردن (کوڕانە)",
-      "ئەندامی جەستە (کوڕانە)", "تۆپی پێ"
+      "پیتی ئینگلیزی ٢", "دانانەوەی سەیارە و گواستنەوەکان", "ڕەنگەکان ١", "ڕەنگەکان ٢",
+      "ژمارەی ئینگلیزی", "ئامێر و سەیارە جۆراوجۆرەکان", "ددان شۆردن (کوڕانە)",
+      "ئەندامی جەستە (کوڕانە)", "ورگ ئێشان"
     ];
+    let pageTypes = MASTER_PAGE_TYPES.slice();
+
+    // ناوە کۆنەکان -> ناوە نوێیەکان (بۆ ئەوەی داواکارییە کۆنەکانی فایەربەیس تێک نەچن)
+    const PAGE_RENAMES = {
+      "شۆفڵ و حەفارە": "ئامێر و سەیارە جۆراوجۆرەکان",
+      "مۆتۆڕسکیل (پۆلیس)": "ئامێر و سەیارە جۆراوجۆرەکان",
+      "تابلۆی ژمارەکان": "دانانەوەی سەیارە و گواستنەوەکان",
+      "تۆپی پێ": "ورگ ئێشان"
+    };
+
+    function migratePageNames() {
+      const fixList = (arr) => {
+        const out = [];
+        (arr || []).forEach(p => {
+          const n = PAGE_RENAMES[p] || p;
+          if (!out.includes(n)) out.push(n);
+        });
+        return out;
+      };
+      pageTypes = fixList(pageTypes);
+      MASTER_PAGE_TYPES.forEach(p => { if (!pageTypes.includes(p)) pageTypes.push(p); });
+      (orders || []).forEach(o => {
+        if (o && Array.isArray(o.selectedPages)) o.selectedPages = fixList(o.selectedPages);
+      });
+    }
+
+    function resetPageTypesToMaster() {
+      if (!confirm('لیستی پەڕەکان دەگەڕێتەوە بۆ ٢٦ پەڕە ستانداردەکەی master_book.pdf. پەڕە زیادکراوەکان لادەبرێن. دڵنیایت؟')) return;
+      pageTypes = MASTER_PAGE_TYPES.slice();
+      logAction('نەوعیەتی پەڕە', 'لیستی پەڕەکان گەڕایەوە بۆ ٢٦ پەڕەی ستاندارد', 'settingsTab');
+      syncToCloud();
+      showToast('لیستی ٢٦ پەڕە گەڕایەوە', '♻️');
+    }
     
     let orderTemplates = [
       { id: 1, title: "کتێبی چالاکی ستاندارد", bookType: "کتێبی چالاکی منداڵان (بوسی بووک)", price: 35000, deliveryFee: 5000, deliveryProfit: 1000 },
@@ -2035,6 +2082,7 @@
     }
 
     function refreshAllUI() {
+      migratePageNames();
       renderCardsGrid();
       renderOrders();
       renderCompleted();
