@@ -1550,6 +1550,8 @@
             genderByChild: o.genderByChild || null,
             attachKey: o.attachKey || '',
             attachmentIds: (o.attachments || []).map(a => a.id),
+            attachmentsByChild: Object.fromEntries(childNames.map(n => [n, (o.attachments || [])
+              .filter(a => !a.target || a.target === n || (a.target || '').trim() === n).map(a => a.id)])),
             pagesByChild: o.pagesByChild || null,
             selectedPages: o.selectedPages || []
           })
@@ -2569,7 +2571,7 @@
           const data = await res.json();
           if (!data.success) throw new Error(data.message || 'هەڵە');
           const thumb = await makeThumb(file);
-          currentAttachments.push({ id: data.id, name: data.name, kind: data.kind, pages: data.pages, thumb, isNew: true });
+          currentAttachments.push({ id: data.id, name: data.name, kind: data.kind, pages: data.pages, thumb, isNew: true, target: '' });
           ok++;
           renderPreviews();
         } catch (err) {
@@ -2604,6 +2606,18 @@
           <img src="${src}" style="width:40px; height:40px; border-radius:4px; object-fit:cover; opacity:.6;" title="وێنەی کۆن (بۆ کتێب نانێردرێت)">
           ${x(`currentImages.splice(${i},1);renderPreviews();`)}
         </div>`).join('');
+      const names = getModalChildNames();
+      if (names.length > 1) {
+        const opts = (sel) => `<option value="">هەموو کتێبەکان</option>` + names.map(n => `<option value="${n.replace(/"/g, '&quot;')}" ${sel === n ? 'selected' : ''}>${n}</option>`).join('');
+        const rows = currentAttachments.map((a, i) => `
+          <div style="display:flex; align-items:center; gap:6px; font-size:11px; width:100%; margin-top:2px;">
+            <span style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${a.kind === 'pdf' ? '📄' : '🖼️'} ${a.name || ''}</span>
+            <span>←</span>
+            <select class="form-control" style="width:auto; padding:2px 6px; font-size:11px;" onchange="currentAttachments[${i}].target = this.value">${opts(a.target || '')}</select>
+          </div>`).join('');
+        box.innerHTML = `<div style="display:flex; gap:4px; flex-wrap:wrap; width:100%;">${att + legacy}</div>` + rows;
+        return;
+      }
       box.innerHTML = att + legacy;
     }
 
@@ -2754,6 +2768,7 @@
 
     function onChildNamesChanged() {
       renderPagesUI();
+      renderPreviews();
     }
 
     function togglePerChildPages(on) {
@@ -2958,7 +2973,7 @@
       return currentAttachments.map(a => a.thumb).filter(Boolean).concat(currentImages);
     }
     function attachmentsForSave() {
-      return currentAttachments.map(a => ({ id: a.id, name: a.name, kind: a.kind, pages: a.pages, thumb: a.thumb || '' }));
+      return currentAttachments.map(a => ({ id: a.id, name: a.name, kind: a.kind, pages: a.pages, thumb: a.thumb || '', target: a.target || '' }));
     }
     function closeOrderModal() { document.getElementById('orderModal').style.display = 'none'; }
 
