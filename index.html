@@ -1106,7 +1106,7 @@
 
       <div class="grid-2" style="margin-top:0.4rem;">
         <div>
-          <label style="font-size:12px; font-weight:bold;">ناوی منداڵ (یان منداڵەکان بە فاریزە):</label>
+          <label style="font-size:12px; font-weight:bold;">ناوی منداڵ (یان منداڵەکان بە فاریزە بۆ چەند کتێبێک):</label>
           <input type="text" id="mChildName" class="form-control" placeholder="نموونە: ڕادوان ، ئاراس">
         </div>
         <div style="display:flex; gap:6px;">
@@ -1143,7 +1143,7 @@
 
       <div class="grid-2" style="margin-top:0.4rem;">
         <div>
-          <label style="font-size:12px; font-weight:bold;">نرخی کتێب / کار (IQD):</label>
+          <label style="font-size:12px; font-weight:bold;">کۆی نرخی کتێبەکان / کار (IQD):</label>
           <input type="text" id="mOrderPrice" class="form-control" placeholder="نموونە: ٣٥٠٠٠">
         </div>
         <div>
@@ -1471,12 +1471,12 @@
           <div><b>بەروار:</b> ${o.orderDate || ''}</div>
         </div>
         <hr style="border:1px dashed #ccc; margin:15px 0;">
-        <div style="margin-bottom:8px;"><b>ناوی منداڵ:</b> ${o.childName || o.childInfo || '---'} (تەمەن: ${o.childAge || '---'} | ڕەگەز: ${o.childGender || '---'})</div>
+        <div style="margin-bottom:8px;"><b>ناوی منداڵ(ەکان):</b> ${o.childName || o.childInfo || '---'} (تەمەن: ${o.childAge || '---'} | ڕەگەز: ${o.childGender || '---'})</div>
         <div style="margin-bottom:8px;"><b>جۆری کتێب/کار:</b> ${o.bookType}</div>
         <div style="margin-bottom:8px;"><b>پەڕەکان:</b> ${(o.selectedPages || []).join('، ')}</div>
         <hr style="border:1px dashed #ccc; margin:15px 0;">
         <div style="display:flex; justify-content:space-between; font-size:16px; margin-top:10px;">
-          <div><b>نرخی کار:</b> ${o.price?.toLocaleString()} IQD</div>
+          <div><b>کۆی نرخی کارەکە:</b> ${o.price?.toLocaleString()} IQD</div>
           <div><b>گەیاندن:</b> ${o.deliveryFee?.toLocaleString() || 0} IQD</div>
         </div>
         <div style="text-align:center; font-size:18px; color:#7042f8; font-weight:bold; margin-top:15px;">
@@ -1649,19 +1649,16 @@
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
     
-    // لیستی ٢٩ پەڕە ڕاستەقینەکەی master_book.pdf بە ناوی خاوێنکراوە
+    // لیستی تەواوی ٢٦ پەڕەی هەڵبژاردە بۆ ٢٧ لاپەڕەی ناو PDFەکە (بەبێ بەرگ)
     let pageTypes = [
-      "میوەکان", "سەوزەواتەکان", "ئەندامی جەستە (کچانە)", "ئەندامانی خێزان", 
-      "گیاندارەکان", "ئاژەڵە ماڵییەکان", "شێوە ئەندازەییەکان", "ژمارەی کوردی", 
-      "ئەندازە پڕکردنەوە (ئەوەی ناو سێوەکان)", "دددان شۆردن (کچانە)", "دددان شۆردن (کوڕانە)", 
-      "شاری هەنگەکان", "دانانەوەی شتی کچانە (ناوماڵ)", "دایناسۆرەکان", 
-      "سەیارەی ناو گەراج (بۆڕەنگەکان)", "سەیارەی بەڕەل", "پیتی ئینگلیزی ١", 
-      "پیتی ئینگلیزی ٢", "دانانەوەی شەیبی سەیارە (کوڕانە)", "ڕەنگەکان ١", 
-      "ڕەنگەکان ٢", "ژمارەی ئینگلیزی", "شۆفڵ و حەفارە", "مۆتۆڕسکیل (پۆلیس)", 
-      "ئەندامی جەستە (کوڕانە)", "تۆپی پێ", "دەموچاو ڕێکخستن", 
-      "دانانەوەی بەتەڵەکان (سپایدەرمان کوڕانە)", "دانانەوەی ساندریلا (کچانە)",
-      "وێنەی منداڵ ١", "وێنەی منداڵ ٢", "وێنەی منداڵ ٣", "وێنەی منداڵ ٤",
-      "وێنەی منداڵ ٥", "وێنەی منداڵ ٦", "وێنەی منداڵ ٧"
+      "میوەکان", "سەوزەواتەکان", "ئەندامی جەستە (کچانە)", "ئەندامانی خێزان",
+      "گیاندارەکان", "ئاژەڵە ماڵییەکان", "شێوە ئەندازەییەکان", "ژمارەی کوردی",
+      "ئەندازە پڕکردنەوە (ناو سێوەکان)", "شۆفڵ و حەفارە", "ددان شۆردن (کچانە)",
+      "شاری هەنگەکان", "دانانەوەی شتی کچانە (ناوماڵ)", "دایناسۆرەکان",
+      "سەیارەی ناو گەراج (بۆڕەنگەکان)", "سەیارەی بەڕەل", "پیتی ئینگلیزی ١",
+      "پیتی ئینگلیزی ٢", "تابلۆی ژمارەکان", "ڕەنگەکان ١", "ڕەنگەکان ٢",
+      "ژمارەی ئینگلیزی", "مۆتۆڕسکیل (پۆلیس)", "ددان شۆردن (کوڕانە)",
+      "ئەندامی جەستە (کوڕانە)", "تۆپی پێ"
     ];
     
     let orderTemplates = [
