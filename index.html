@@ -428,26 +428,32 @@
 
     .pages-checklist-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0.4rem;
       background: #f8fafc;
-      padding: 0.6rem;
+      padding: 0.5rem;
       border-radius: 8px;
-      max-height: 180px;
-      overflow-y: auto;
     }
 
     .page-check-item {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      font-size: 12px;
+      font-size: 11.5px;
+      line-height: 1.25;
       cursor: pointer;
       background: #fff;
-      padding: 0.3rem 0.5rem;
+      padding: 0.3rem 0.4rem;
       border-radius: 6px;
       border: 1px solid var(--border);
     }
+    .page-check-item:has(input:checked) { background:#ede9fe; border-color:#7042f8; font-weight:bold; }
+    .page-check-item input { flex-shrink:0; }
+    @media (max-width: 760px) { .pages-checklist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .pages-counter { background:#7042f8; color:#fff; font-size:12px; font-weight:bold; padding:2px 10px; border-radius:20px; }
+    .child-tab { border:1px solid var(--border); background:#fff; padding:4px 10px; border-radius:20px; font-size:12px; cursor:pointer; }
+    .child-tab.active { background:#7042f8; color:#fff; border-color:#7042f8; font-weight:bold; }
+    .pages-tools button { font-size:11px; padding:2px 8px; border:1px solid var(--border); background:#fff; border-radius:6px; cursor:pointer; }
 
     .grid-2 {
       display: grid;
@@ -518,8 +524,8 @@
       padding: 1.4rem;
       border-radius: 14px;
       width: 100%;
-      max-width: 650px;
-      max-height: 90vh;
+      max-width: 900px;
+      max-height: 96vh;
       overflow-y: auto;
     }
 
@@ -1108,7 +1114,7 @@
       <div class="grid-2" style="margin-top:0.4rem;">
         <div>
           <label style="font-size:12px; font-weight:bold;">ناوی منداڵ (یان منداڵەکان بە فاریزە بۆ چەند کتێبێک):</label>
-          <input type="text" id="mChildName" class="form-control" placeholder="نموونە: ڕادوان ، ئاراس">
+          <input type="text" id="mChildName" class="form-control" placeholder="نموونە: ڕادوان ، ئاراس" oninput="onChildNamesChanged()">
         </div>
         <div style="display:flex; gap:6px;">
           <div style="flex:1;">
@@ -1157,7 +1163,22 @@
       </div>
 
       <div style="margin-top:0.6rem;">
-        <label style="font-size:12px; font-weight:bold;">پەڕەکان (سەحی لێبدە):</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:8px; flex-wrap:wrap;">
+          <label style="font-size:12px; font-weight:bold;">پەڕەکان (سەحی لێبدە):</label>
+          <span class="pages-counter" id="pagesCounter">٠ پەڕە</span>
+        </div>
+        <div id="childPagesBox" style="display:none; margin-bottom:6px; padding:6px 8px; background:#faf5ff; border:1px dashed #c4b5fd; border-radius:8px;">
+          <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" id="perChildToggle" onchange="togglePerChildPages(this.checked)">
+            <b>پەڕەی جیاواز بۆ هەر منداڵێک</b>
+          </label>
+          <div id="childPagesTabs" style="display:none; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+        </div>
+        <div class="pages-tools" style="display:flex; gap:6px; margin-bottom:4px; flex-wrap:wrap;">
+          <button type="button" onclick="pagesSelectAll(true)">هەموو</button>
+          <button type="button" onclick="pagesSelectAll(false)">هیچ</button>
+          <button type="button" id="copyToAllBtn" style="display:none;" onclick="copyPagesToAllChildren()">کۆپی بۆ هەموو منداڵەکان</button>
+        </div>
         <div class="pages-checklist-grid" id="modalPagesChecklist"></div>
       </div>
 
@@ -1474,7 +1495,7 @@
         <hr style="border:1px dashed #ccc; margin:15px 0;">
         <div style="margin-bottom:8px;"><b>ناوی منداڵ(ەکان):</b> ${o.childName || o.childInfo || '---'} (تەمەن: ${o.childAge || '---'} | ڕەگەز: ${o.childGender || '---'})</div>
         <div style="margin-bottom:8px;"><b>جۆری کتێب/کار:</b> ${o.bookType}</div>
-        <div style="margin-bottom:8px;"><b>پەڕەکان:</b> ${(o.selectedPages || []).join('، ')}</div>
+        <div style="margin-bottom:8px;"><b>پەڕەکان:</b> ${pagesSummary(o, true)}</div>
         <hr style="border:1px dashed #ccc; margin:15px 0;">
         <div style="display:flex; justify-content:space-between; font-size:16px; margin-top:10px;">
           <div><b>کۆی نرخی کارەکە:</b> ${o.price?.toLocaleString()} IQD</div>
@@ -1520,6 +1541,7 @@
             childName: rawName,
             childNames: childNames,
             childGender: o.childGender || '',
+            pagesByChild: o.pagesByChild || null,
             selectedPages: o.selectedPages || []
           })
         });
@@ -1676,6 +1698,9 @@
       "ئەندامی جەستە (کوڕانە)", "ورگ ئێشان"
     ];
     let pageTypes = MASTER_PAGE_TYPES.slice();
+    const PAGE_TYPES_VERSION = 3;          // ئەگەر بەرزکرایەوە، لیستی پەڕەکان جارێکی تر دەگەڕێتەوە بۆ ٢٦ پەڕەکە
+    let pageTypesVersion = parseInt(localStorage.getItem('th_page_types_ver') || '0');
+    let pageTypesResetPending = false;
 
     // ناوە کۆنەکان -> ناوە نوێیەکان (بۆ ئەوەی داواکارییە کۆنەکانی فایەربەیس تێک نەچن)
     const PAGE_RENAMES = {
@@ -1685,19 +1710,51 @@
       "تۆپی پێ": "ورگ ئێشان"
     };
 
+    // ناوە کۆن و کورتکراوەکان -> ناوی ڕاستەقینەی ناو PDF (بۆ داواکارییە کۆنەکان)
+    const LEGACY_PAGE_NAMES = {
+      "میوە": "میوەکان", "میوەکان": "میوەکان",
+      "سەوزەوات": "سەوزەواتەکان", "سەوزە": "سەوزەواتەکان",
+      "گیاندار": "گیاندارەکان", "ئاژەڵ": "ئاژەڵە ماڵییەکان", "ئاژەڵی ماڵی": "ئاژەڵە ماڵییەکان",
+      "دایناسۆر": "دایناسۆرەکان", "شێوە ئەندازەیی": "شێوە ئەندازەییەکان",
+      "ئەندازە پڕکردنەوە (ئەوەی ناو سێوەکان)": "ئەندازە پڕکردنەوە (ناو سێوەکان)",
+      "ئەندازە پڕکردنەوە": "ئەندازە پڕکردنەوە (ناو سێوەکان)",
+      "شاری هەنگ": "شاری هەنگەکان", "ڕەنگەکان": null, "رەنگەکان": null
+    };
+
+    function mapLegacyPage(name, gender) {
+      if (MASTER_PAGE_TYPES.includes(name)) return name;
+      if (PAGE_RENAMES[name]) return PAGE_RENAMES[name];
+      const isGirl = (gender || '').startsWith('کچ');
+      const isBoy = (gender || '').startsWith('کوڕ');
+      if (name === "ددان شۆردن") return isGirl ? "ددان شۆردن (کچانە)" : (isBoy ? "ددان شۆردن (کوڕانە)" : name);
+      if (name === "ئەندامی جەستە") return isGirl ? "ئەندامی جەستە (کچانە)" : (isBoy ? "ئەندامی جەستە (کوڕانە)" : name);
+      if (LEGACY_PAGE_NAMES[name]) return LEGACY_PAGE_NAMES[name];
+      return name;
+    }
+
     function migratePageNames() {
-      const fixList = (arr) => {
+      // یەک جار: لیستی پەڕەکان دەگەڕێتەوە بۆ ٢٦ پەڕەی ڕاستەقینەی master_book.pdf و ئەوانی تر دەسڕێنەوە
+      if (pageTypesVersion < PAGE_TYPES_VERSION) {
+        pageTypes = MASTER_PAGE_TYPES.slice();
+        pageTypesVersion = PAGE_TYPES_VERSION;
+        localStorage.setItem('th_page_types_ver', String(pageTypesVersion));
+        pageTypesResetPending = true;
+      }
+      (orders || []).forEach(o => {
+        if (!o || !Array.isArray(o.selectedPages)) return;
         const out = [];
-        (arr || []).forEach(p => {
-          const n = PAGE_RENAMES[p] || p;
+        o.selectedPages.forEach(p => {
+          const n = mapLegacyPage(p, o.childGender);
           if (!out.includes(n)) out.push(n);
         });
-        return out;
-      };
-      pageTypes = fixList(pageTypes);
-      MASTER_PAGE_TYPES.forEach(p => { if (!pageTypes.includes(p)) pageTypes.push(p); });
-      (orders || []).forEach(o => {
-        if (o && Array.isArray(o.selectedPages)) o.selectedPages = fixList(o.selectedPages);
+        o.selectedPages = out;
+        if (o.pagesByChild) {
+          Object.keys(o.pagesByChild).forEach(n => {
+            const o2 = [];
+            (o.pagesByChild[n] || []).forEach(p => { const m = mapLegacyPage(p, o.childGender); if (!o2.includes(m)) o2.push(m); });
+            o.pagesByChild[n] = o2;
+          });
+        }
       });
     }
 
@@ -1781,6 +1838,7 @@
           workExpenses = val.workExpenses || [];
           bookTypes = val.bookTypes || bookTypes;
           pageTypes = val.pageTypes || pageTypes;
+          pageTypesVersion = val.pageTypesVersion || 0;
           if (val.orderTemplates) orderTemplates = val.orderTemplates;
           if (val.cardOrder) cardOrder = val.cardOrder;
 
@@ -1799,6 +1857,7 @@
           
           refreshAllUI();
           checkEmergencyAlerts();
+          if (pageTypesResetPending) { pageTypesResetPending = false; syncToCloud(); }
         }
       });
     }
@@ -1816,10 +1875,11 @@
       localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
       localStorage.setItem('th_order_templates', JSON.stringify(orderTemplates));
       localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
+      localStorage.setItem('th_page_types_ver', String(pageTypesVersion));
       refreshAllUI();
 
       db.ref('tinyhands_data').set({
-        orders, finances, assets, trash, activityLogs, sharedNotes, workCategories, workExpenses, bookTypes, pageTypes, orderTemplates, cardOrder
+        orders, finances, assets, trash, activityLogs, sharedNotes, workCategories, workExpenses, bookTypes, pageTypes, pageTypesVersion, orderTemplates, cardOrder
       });
     }
 
@@ -1872,10 +1932,7 @@
         document.getElementById('mCustomBookInput').value = o.bookType;
       }
 
-      const targetPages = o.selectedPages || [];
-      document.querySelectorAll('#modalPagesChecklist input[type="checkbox"]').forEach(cb => {
-        cb.checked = targetPages.includes(cb.value);
-      });
+      initPagesState({ selectedPages: (o.selectedPages || []).slice(), pagesByChild: o.pagesByChild || null });
 
       document.getElementById('repeatCustomerBanner').style.display = 'none';
       showToast('زانیاری کڕیار بە سەرکەوتوویی پڕکرایەوە وەک داواکارییەکی نوێ', '⚡');
@@ -2502,6 +2559,153 @@
       }
     }
 
+    // ===== هەڵبژاردنی پەڕەکان (هاوبەش یان جیاواز بۆ هەر منداڵێک) =====
+    let pagesState = { perChild: false, shared: [], byChild: {}, active: '' };
+
+    function splitChildNames(raw) {
+      return String(raw || '').split(/\s*[,،\/\\-]\s*|\s+و\s+/).map(n => n.trim()).filter(Boolean);
+    }
+    function getModalChildNames() {
+      return splitChildNames(document.getElementById('mChildName').value);
+    }
+    function toArabicNum(n) { return String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]); }
+    function orderedPages(arr) {
+      const s = new Set(arr || []);
+      const known = pageTypes.filter(p => s.has(p));
+      (arr || []).forEach(p => { if (!known.includes(p)) known.push(p); });
+      return known;
+    }
+    function currentPagesKey() {
+      const names = getModalChildNames();
+      return (pagesState.perChild && names.length > 1) ? pagesState.active : null;
+    }
+    function currentPagesArr() {
+      const k = currentPagesKey();
+      return k ? (pagesState.byChild[k] = pagesState.byChild[k] || []) : pagesState.shared;
+    }
+
+    function initPagesState(o) {
+      const shared = (o && o.selectedPages) ? o.selectedPages.slice() : [];
+      pagesState = { perChild: false, shared, byChild: {}, active: '' };
+      if (o && o.pagesByChild && Object.keys(o.pagesByChild).length) {
+        pagesState.perChild = true;
+        Object.keys(o.pagesByChild).forEach(n => pagesState.byChild[n] = o.pagesByChild[n].slice());
+      }
+      renderPagesUI();
+    }
+
+    function onChildNamesChanged() {
+      renderPagesUI();
+    }
+
+    function togglePerChildPages(on) {
+      pagesState.perChild = !!on;
+      if (on) {
+        getModalChildNames().forEach(n => {
+          if (!pagesState.byChild[n]) pagesState.byChild[n] = pagesState.shared.slice();
+        });
+      }
+      renderPagesUI();
+    }
+
+    function setActiveChild(n) { pagesState.active = n; renderPagesUI(); }
+
+    function renderPagesUI() {
+      const names = getModalChildNames();
+      const multi = names.length > 1;
+      const box = document.getElementById('childPagesBox');
+      const tabs = document.getElementById('childPagesTabs');
+      box.style.display = multi ? 'block' : 'none';
+      document.getElementById('perChildToggle').checked = pagesState.perChild && multi;
+
+      const per = pagesState.perChild && multi;
+      if (per) {
+        names.forEach(n => { if (!pagesState.byChild[n]) pagesState.byChild[n] = pagesState.shared.slice(); });
+        if (!names.includes(pagesState.active)) pagesState.active = names[0];
+        tabs.style.display = 'flex';
+        tabs.innerHTML = names.map(n => `
+          <button type="button" class="child-tab ${n === pagesState.active ? 'active' : ''}" data-name="${n.replace(/"/g, '&quot;')}">
+            ${n} (${toArabicNum((pagesState.byChild[n] || []).length)})
+          </button>`).join('');
+        tabs.querySelectorAll('.child-tab').forEach(b => b.onclick = () => setActiveChild(b.dataset.name));
+      } else {
+        tabs.style.display = 'none';
+        tabs.innerHTML = '';
+      }
+      document.getElementById('copyToAllBtn').style.display = per ? 'inline-block' : 'none';
+
+      const sel = new Set(currentPagesArr());
+      const grid = document.getElementById('modalPagesChecklist');
+      grid.innerHTML = pageTypes.map(p => `
+        <label class="page-check-item">
+          <input type="checkbox" value="${p.replace(/"/g, '&quot;')}" ${sel.has(p) ? 'checked' : ''}>
+          <span>${p}</span>
+        </label>`).join('');
+      grid.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.onchange = onPageCheckChanged);
+      updatePagesCounter();
+    }
+
+    function onPageCheckChanged() {
+      const arr = [];
+      document.querySelectorAll('#modalPagesChecklist input[type="checkbox"]:checked').forEach(cb => arr.push(cb.value));
+      const k = currentPagesKey();
+      if (k) pagesState.byChild[k] = arr; else pagesState.shared = arr;
+      updatePagesCounter();
+      if (k) {
+        document.querySelectorAll('#childPagesTabs .child-tab').forEach(b => {
+          const n = b.dataset.name;
+          b.textContent = `${n} (${toArabicNum((pagesState.byChild[n] || []).length)})`;
+        });
+      }
+    }
+
+    function updatePagesCounter() {
+      const total = pageTypes.length;
+      const k = currentPagesKey();
+      const n = currentPagesArr().length;
+      document.getElementById('pagesCounter').innerText =
+        (k ? `${k}: ` : '') + `${toArabicNum(n)} پەڕە هەڵبژێردراوە لە ${toArabicNum(total)}`;
+    }
+
+    function pagesSelectAll(on) {
+      document.querySelectorAll('#modalPagesChecklist input[type="checkbox"]').forEach(cb => cb.checked = on);
+      onPageCheckChanged();
+    }
+
+    function copyPagesToAllChildren() {
+      const k = currentPagesKey();
+      if (!k) return;
+      const src = (pagesState.byChild[k] || []).slice();
+      getModalChildNames().forEach(n => pagesState.byChild[n] = src.slice());
+      renderPagesUI();
+      showToast('پەڕەکان بۆ هەموو منداڵەکان کۆپی کران', '📋');
+    }
+
+    function collectModalPages() {
+      const names = getModalChildNames();
+      if (pagesState.perChild && names.length > 1) {
+        const byChild = {};
+        const union = new Set();
+        names.forEach(n => {
+          const arr = orderedPages(pagesState.byChild[n] || []);
+          byChild[n] = arr;
+          arr.forEach(p => union.add(p));
+        });
+        return { selectedPages: orderedPages([...union]), pagesByChild: byChild };
+      }
+      return { selectedPages: orderedPages(pagesState.shared), pagesByChild: null };
+    }
+
+    function pagesSummary(o, html) {
+      const sep = html ? '<br>' : ' | ';
+      if (o.pagesByChild && Object.keys(o.pagesByChild).length) {
+        return Object.entries(o.pagesByChild).map(([n, pgs]) =>
+          (html ? `<b>${n}</b>` : n) + ` (${pgs.length}): ` + pgs.join(html ? ', ' : '، ')).join(sep);
+      }
+      const p = o.selectedPages || [];
+      return `(${p.length}) ` + p.join(html ? ', ' : '، ');
+    }
+
     function openOrderModal(id = null) {
       document.getElementById('editOrderId').value = id || '';
       document.getElementById('repeatCustomerBanner').style.display = 'none';
@@ -2547,12 +2751,7 @@
 
         currentImages = o.images || [];
 
-        document.getElementById('modalPagesChecklist').innerHTML = pageTypes.map(p => `
-          <label class="page-check-item">
-            <input type="checkbox" value="${p}" ${(o.selectedPages || []).includes(p) ? 'checked' : ''}>
-            <span>${p}</span>
-          </label>
-        `).join('');
+        initPagesState(o);
       } else {
         document.getElementById('orderModalTitle').innerText = 'داواکاری نوێ / داتا ئینتری';
         document.getElementById('mCustName').value = '';
@@ -2576,12 +2775,7 @@
         document.getElementById('mOrderNotes').value = '';
         currentImages = [];
 
-        document.getElementById('modalPagesChecklist').innerHTML = pageTypes.map(p => `
-          <label class="page-check-item">
-            <input type="checkbox" value="${p}">
-            <span>${p}</span>
-          </label>
-        `).join('');
+        initPagesState(null);
       }
       renderPreviews();
       document.getElementById('orderModal').style.display = 'flex';
@@ -2617,8 +2811,7 @@
         bookType = customVal || 'کتێبی تایبەت (کەستم)';
       }
 
-      const selectedPages = [];
-      document.querySelectorAll('#modalPagesChecklist input[type="checkbox"]:checked').forEach(cb => selectedPages.push(cb.value));
+      const { selectedPages, pagesByChild } = collectModalPages();
 
       if (!name) return alert('تکایە ناوی کڕیار بنووسە');
 
@@ -2637,7 +2830,7 @@
         o.deliveryFee = deliveryFee;
         o.deliveryProfit = deliveryProfit;
         o.payment = payment;
-        o.notes = notes; o.bookType = bookType; o.selectedPages = selectedPages;
+        o.notes = notes; o.bookType = bookType; o.selectedPages = selectedPages; o.pagesByChild = pagesByChild;
         o.images = currentImages;
         logAction('دەستکاری داواکاری', `داواکاری [${name}] نوێکرایەوە`, 'ordersTab');
       } else {
@@ -2646,7 +2839,7 @@
           childName, childAge, childGender,
           price, deliveryFee, deliveryProfit,
           payment, notes, bookType,
-          selectedPages, images: currentImages, completed: false,
+          selectedPages, pagesByChild, images: currentImages, completed: false,
           stages: { data: false, design: false, print: false, ready: false, sent: false }
         });
         logAction('داواکاری نوێ', `داواکاری نوێ بۆ [${name}] تۆمارکرا`, 'ordersTab');
@@ -2745,7 +2938,7 @@
             <strong>${o.childName || '---'}</strong><br>
             <small>تەمەن: <b>${o.childAge || '---'}</b> | ڕەگەز: <b>${o.childGender || '---'}</b></small>
           </td>
-          <td><strong>${o.bookType}</strong><br><small style="color:var(--text-muted);">${(o.selectedPages||[]).join(', ')}</small></td>
+          <td><strong>${o.bookType}</strong><br><small style="color:var(--text-muted);">${pagesSummary(o, true)}</small></td>
           <td>${(o.images||[]).length ? `<img src="${o.images[0]}" style="width:30px; height:30px; border-radius:4px; object-fit:cover;">` : 'بێ وێنە'}</td>
           <td><strong>${(o.price || 0).toLocaleString()}</strong></td>
           <td>
