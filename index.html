@@ -1121,14 +1121,19 @@
             <label style="font-size:12px; font-weight:bold;">تەمەن (ساڵ):</label>
             <input type="number" id="mChildAge" class="form-control" placeholder="نموونە: 4" min="1" max="15">
           </div>
-          <div style="flex:1;">
+          <div style="flex:1;" id="mChildGenderWrap">
             <label style="font-size:12px; font-weight:bold;">ڕەگەز:</label>
-            <select id="mChildGender" class="form-control">
+            <select id="mChildGender" class="form-control" onchange="onGenderChanged()">
               <option value="کوڕ">کوڕ</option>
               <option value="کچ">کچ</option>
             </select>
           </div>
         </div>
+      </div>
+
+      <div id="childGendersBox" style="display:none; margin-top:0.4rem; padding:6px 8px; background:#f0f9ff; border:1px dashed #7dd3fc; border-radius:8px;">
+        <label style="font-size:12px; font-weight:bold;">ڕەگەزی هەر منداڵێک (بۆ هەڵبژاردنی بەرگ و پەڕەی کوڕانە/کچانە):</label>
+        <div id="childGendersRows" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;"></div>
       </div>
 
       <div style="margin-top:0.4rem;">
@@ -1493,7 +1498,7 @@
           <div><b>بەروار:</b> ${o.orderDate || ''}</div>
         </div>
         <hr style="border:1px dashed #ccc; margin:15px 0;">
-        <div style="margin-bottom:8px;"><b>ناوی منداڵ(ەکان):</b> ${o.childName || o.childInfo || '---'} (تەمەن: ${o.childAge || '---'} | ڕەگەز: ${o.childGender || '---'})</div>
+        <div style="margin-bottom:8px;"><b>ناوی منداڵ(ەکان):</b> ${o.childName || o.childInfo || '---'} (تەمەن: ${o.childAge || '---'} | ڕەگەز: ${genderLabel(o)})</div>
         <div style="margin-bottom:8px;"><b>جۆری کتێب/کار:</b> ${o.bookType}</div>
         <div style="margin-bottom:8px;"><b>پەڕەکان:</b> ${pagesSummary(o, true)}</div>
         <hr style="border:1px dashed #ccc; margin:15px 0;">
@@ -1541,6 +1546,7 @@
             childName: rawName,
             childNames: childNames,
             childGender: o.childGender || '',
+            genderByChild: o.genderByChild || null,
             pagesByChild: o.pagesByChild || null,
             selectedPages: o.selectedPages || []
           })
@@ -1932,7 +1938,7 @@
         document.getElementById('mCustomBookInput').value = o.bookType;
       }
 
-      initPagesState({ selectedPages: (o.selectedPages || []).slice(), pagesByChild: o.pagesByChild || null });
+      initPagesState({ selectedPages: (o.selectedPages || []).slice(), pagesByChild: o.pagesByChild || null, genderByChild: o.genderByChild || null });
 
       document.getElementById('repeatCustomerBanner').style.display = 'none';
       showToast('زانیاری کڕیار بە سەرکەوتوویی پڕکرایەوە وەک داواکارییەکی نوێ', '⚡');
@@ -2562,6 +2568,105 @@
     // ===== هەڵبژاردنی پەڕەکان (هاوبەش یان جیاواز بۆ هەر منداڵێک) =====
     let pagesState = { perChild: false, shared: [], byChild: {}, active: '' };
 
+    // ===== ڕەگەزی هەر منداڵێک (بۆ بەرگ و پەڕە تایبەتەکان) =====
+    let genderState = {};
+    // پەڕەی کچانە <-> کوڕانە (هەمان ناوەڕۆک بە دوو ڤێرشن)
+    const GIRL_BOY_SWAP = {
+      "ئەندامی جەستە (کچانە)": "ئەندامی جەستە (کوڕانە)",
+      "ددان شۆردن (کچانە)": "ددان شۆردن (کوڕانە)"
+    };
+    // پەڕەی تایبەت بە کچان کە ڤێرشنی کوڕانەی نییە
+    const GIRL_ONLY_PAGES = ["دانانەوەی شتی کچانە (ناوماڵ)"];
+
+    function normGender(g) {
+      g = String(g || '');
+      return g.startsWith('کوڕ') ? 'کوڕ' : (g.startsWith('کچ') ? 'کچ' : '');
+    }
+    function childGenderOf(name) {
+      return normGender(genderState[name]) || normGender(document.getElementById('mChildGender').value);
+    }
+    // پەڕەیەک بۆ ڕەگەزێک: دەیگۆڕێت بۆ ڤێرشنی گونجاو، یان null ئەگەر بۆ ئەو ڕەگەزە نەگونجێت
+    function swapPageForGender(p, g) {
+      if (g === 'کوڕ') {
+        if (GIRL_BOY_SWAP[p]) return GIRL_BOY_SWAP[p];
+        if (GIRL_ONLY_PAGES.includes(p)) return null;
+      } else if (g === 'کچ') {
+        const girlName = Object.keys(GIRL_BOY_SWAP).find(k => GIRL_BOY_SWAP[k] === p);
+        if (girlName) return girlName;
+      }
+      return p;
+    }
+    function convertSelection(arr, g) {
+      if (!g) return arr;
+      const out = [];
+      (arr || []).forEach(p => {
+        const m = swapPageForGender(p, g);
+        if (m && !out.includes(m)) out.push(m);
+      });
+      return out;
+    }
+    // ڕەگەزی ئەو لیستەی ئێستا لەسەر شاشەیە ('' = تێکەڵ، هەموو پەڕەکان نیشان دەدرێن)
+    function activeGender() {
+      const names = getModalChildNames();
+      if (names.length <= 1) return normGender(document.getElementById('mChildGender').value);
+      if (pagesState.perChild) return childGenderOf(pagesState.active);
+      const gs = new Set(names.map(childGenderOf));
+      return gs.size === 1 ? [...gs][0] : '';
+    }
+    function syncGenderSelections() {
+      const names = getModalChildNames();
+      if (names.length > 1 && pagesState.perChild) {
+        names.forEach(n => { pagesState.byChild[n] = convertSelection(pagesState.byChild[n] || [], childGenderOf(n)); });
+      } else {
+        const g = activeGender();
+        if (g) pagesState.shared = convertSelection(pagesState.shared, g);
+      }
+    }
+    function onGenderChanged() { renderPagesUI(); }
+    function renderChildGenders() {
+      const names = getModalChildNames();
+      const box = document.getElementById('childGendersBox');
+      const rows = document.getElementById('childGendersRows');
+      const wrap = document.getElementById('mChildGenderWrap');
+      if (names.length <= 1) {
+        box.style.display = 'none'; rows.innerHTML = '';
+        if (wrap) wrap.style.visibility = 'visible';
+        return;
+      }
+      const def = normGender(document.getElementById('mChildGender').value) || 'کوڕ';
+      names.forEach(n => { if (!normGender(genderState[n])) genderState[n] = def; });
+      box.style.display = 'block';
+      if (wrap) wrap.style.visibility = 'hidden';   // لە فرە-منداڵ ڕەگەز بۆ هەر یەکێک جیا دیاری دەکرێت
+      rows.innerHTML = names.map(n => {
+        const g = genderState[n];
+        const safe = n.replace(/"/g, '&quot;');
+        return `<label style="font-size:12px; display:flex; align-items:center; gap:6px;">
+          <b>${n}:</b>
+          <select class="form-control" style="width:90px;" data-name="${safe}">
+            <option value="کوڕ" ${g === 'کوڕ' ? 'selected' : ''}>کوڕ</option>
+            <option value="کچ" ${g === 'کچ' ? 'selected' : ''}>کچ</option>
+          </select>
+        </label>`;
+      }).join('');
+      rows.querySelectorAll('select').forEach(sel => sel.onchange = () => {
+        genderState[sel.dataset.name] = sel.value;
+        renderPagesUI();
+      });
+    }
+    function collectChildGenders() {
+      const names = getModalChildNames();
+      if (names.length <= 1) return null;
+      const m = {};
+      names.forEach(n => { m[n] = childGenderOf(n) || 'کوڕ'; });
+      return m;
+    }
+    function genderLabel(o) {
+      if (o.genderByChild && Object.keys(o.genderByChild).length > 1) {
+        return Object.entries(o.genderByChild).map(([n, g]) => `${n}: ${g}`).join('، ');
+      }
+      return o.childGender || '---';
+    }
+
     function splitChildNames(raw) {
       return String(raw || '').split(/\s*[,،\/\\-]\s*|\s+و\s+/).map(n => n.trim()).filter(Boolean);
     }
@@ -2585,6 +2690,7 @@
     }
 
     function initPagesState(o) {
+      genderState = (o && o.genderByChild) ? Object.assign({}, o.genderByChild) : {};
       const shared = (o && o.selectedPages) ? o.selectedPages.slice() : [];
       pagesState = { perChild: false, shared, byChild: {}, active: '' };
       if (o && o.pagesByChild && Object.keys(o.pagesByChild).length) {
@@ -2611,6 +2717,7 @@
     function setActiveChild(n) { pagesState.active = n; renderPagesUI(); }
 
     function renderPagesUI() {
+      renderChildGenders();
       const names = getModalChildNames();
       const multi = names.length > 1;
       const box = document.getElementById('childPagesBox');
@@ -2634,9 +2741,13 @@
       }
       document.getElementById('copyToAllBtn').style.display = per ? 'inline-block' : 'none';
 
+      syncGenderSelections();
+      const g = activeGender();
+      const visiblePages = g ? pageTypes.filter(p => swapPageForGender(p, g) === p) : pageTypes;
+
       const sel = new Set(currentPagesArr());
       const grid = document.getElementById('modalPagesChecklist');
-      grid.innerHTML = pageTypes.map(p => `
+      grid.innerHTML = visiblePages.map(p => `
         <label class="page-check-item">
           <input type="checkbox" value="${p.replace(/"/g, '&quot;')}" ${sel.has(p) ? 'checked' : ''}>
           <span>${p}</span>
@@ -2660,7 +2771,8 @@
     }
 
     function updatePagesCounter() {
-      const total = pageTypes.length;
+      const g = activeGender();
+      const total = g ? pageTypes.filter(p => swapPageForGender(p, g) === p).length : pageTypes.length;
       const k = currentPagesKey();
       const n = currentPagesArr().length;
       document.getElementById('pagesCounter').innerText =
@@ -2796,7 +2908,8 @@
       const address = document.getElementById('mCustAddress').value.trim();
       const childName = document.getElementById('mChildName').value.trim();
       const childAge = parseKurdishNumber(document.getElementById('mChildAge').value);
-      const childGender = document.getElementById('mChildGender').value;
+      const genderByChild = collectChildGenders();
+      const childGender = genderByChild ? (genderByChild[getModalChildNames()[0]] || 'کوڕ') : document.getElementById('mChildGender').value;
       
       const deliveryFee = parseKurdishNumber(document.getElementById('mDeliveryFee').value);
       const deliveryProfit = parseKurdishNumber(document.getElementById('mDeliveryProfit').value);
@@ -2826,6 +2939,7 @@
         o.childName = childName;
         o.childAge = childAge;
         o.childGender = childGender;
+        o.genderByChild = genderByChild;
         o.price = price; 
         o.deliveryFee = deliveryFee;
         o.deliveryProfit = deliveryProfit;
@@ -2836,7 +2950,7 @@
       } else {
         orders.unshift({
           id: Date.now(), name, phone, ordererRelation, orderDate, orderTime, deliveryDate, address, 
-          childName, childAge, childGender,
+          childName, childAge, childGender, genderByChild,
           price, deliveryFee, deliveryProfit,
           payment, notes, bookType,
           selectedPages, pagesByChild, images: currentImages, completed: false,
@@ -2936,7 +3050,7 @@
           </td>
           <td>
             <strong>${o.childName || '---'}</strong><br>
-            <small>تەمەن: <b>${o.childAge || '---'}</b> | ڕەگەز: <b>${o.childGender || '---'}</b></small>
+            <small>تەمەن: <b>${o.childAge || '---'}</b> | ڕەگەز: <b>${genderLabel(o)}</b></small>
           </td>
           <td><strong>${o.bookType}</strong><br><small style="color:var(--text-muted);">${pagesSummary(o, true)}</small></td>
           <td>${(o.images||[]).length ? `<img src="${o.images[0]}" style="width:30px; height:30px; border-radius:4px; object-fit:cover;">` : 'بێ وێنە'}</td>
@@ -3343,8 +3457,12 @@
         const ord = o.ordererRelation || 'دایک';
         ordererCounts[ord] = (ordererCounts[ord] || 0) + 1;
 
-        const gen = o.childGender || 'کوڕ';
-        genderCounts[gen] = (genderCounts[gen] || 0) + 1;
+        if (o.genderByChild && Object.keys(o.genderByChild).length > 1) {
+          Object.values(o.genderByChild).forEach(gv => { genderCounts[gv] = (genderCounts[gv] || 0) + 1; });
+        } else {
+          const gen = o.childGender || 'کوڕ';
+          genderCounts[gen] = (genderCounts[gen] || 0) + 1;
+        }
 
         const city = (o.address || 'دیارینەکراو').split(/،|-|\s/)[0].trim() || 'دیارینەکراو';
         cityCounts[city] = (cityCounts[city] || 0) + 1;
