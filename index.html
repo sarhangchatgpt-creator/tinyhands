@@ -1192,7 +1192,7 @@
         <input type="file" id="mOrderImages" class="form-control" multiple accept="image/*,.pdf,application/pdf" onchange="handleImageUpload(event)">
         <div id="attachStatus" style="font-size:11px; color:#64748b; margin-top:2px;"></div>
       </div>
-      <div id="imagePreviewContainer" style="display:flex; gap:4px; flex-wrap:wrap; margin:0.4rem 0;"></div>
+      <div id="imagePreviewContainer" style="display:flex; flex-direction:column; gap:6px; margin:0.4rem 0;"></div>
 
       <div style="margin-top:0.4rem;">
         <label style="font-size:12px; font-weight:bold;">تێبینی:</label>
@@ -1518,7 +1518,6 @@
       pArea.style.display = 'none';
     }
 
-    // فەنکشنی ناردنی فەرمان بۆ پایتۆن بۆ دروستکردنی کتێب بە شێوەی خۆکار (تەنانەت فرە-کتێبیش بێت)
     async function autoGenerateBookPDF(orderId) {
       const o = orders.find(x => x.id === orderId);
       if (!o) return;
@@ -1532,7 +1531,6 @@
         if (!confirm("هیچ پەڕەیەک هەڵنەبژێردراوە، تەنها بەرگ دروست دەکرێت. بەردەوام بم؟")) return;
       }
 
-      // فرە-کتێب: ناوەکان جیادەکرێنەوە (فاریزە، خەت، یان (و)). تەنها فایلەکان زۆر دەبن، داتای دارایی هەر یەک جارە.
       const childNames = rawName.split(/\s*[,،\/\\-]\s*|\s+و\s+/).map(n => n.trim()).filter(Boolean);
 
       showToast(childNames.length > 1
@@ -1551,7 +1549,7 @@
             attachKey: o.attachKey || '',
             attachmentIds: (o.attachments || []).map(a => a.id),
             attachmentsByChild: Object.fromEntries(childNames.map(n => [n, (o.attachments || [])
-              .filter(a => !a.target || a.target === n || (a.target || '').trim() === n).map(a => a.id)])),
+              .filter(a => !a.target || a.target === 'هەموو کتێبەکان' || a.target.trim() === n.trim() || a.target.includes(n)).map(a => a.id)])),
             pagesByChild: o.pagesByChild || null,
             selectedPages: o.selectedPages || []
           })
@@ -1696,8 +1694,6 @@
     let workExpenses = [];
     let bookTypes = ["کتێبی چالاکی منداڵان (بوسی بووک)", "کتێبی پیتی کوردی", "کتێبی چیرۆکی دەستکاری کراو"];
     
-    // لیستی ٢٦ پەڕەی هەڵبژاردە = لاپەڕەی ٢ تا ٢٧ی master_book.pdf (لاپەڕەی ١ بەرگە و خۆکارانە دێت)
-    // ناوەکان ڕێک هاوتای PAGE_MAP لە Book_Automation.py ن
     const MASTER_PAGE_TYPES = [
       "میوەکان", "سەوزەواتەکان", "ئەندامی جەستە (کچانە)", "ئەندامانی خێزان",
       "گیاندارەکان", "ئاژەڵە ماڵییەکان", "شێوە ئەندازەییەکان", "ژمارەی کوردی",
@@ -1709,11 +1705,10 @@
       "ئەندامی جەستە (کوڕانە)", "ورگ ئێشان"
     ];
     let pageTypes = MASTER_PAGE_TYPES.slice();
-    const PAGE_TYPES_VERSION = 3;          // ئەگەر بەرزکرایەوە، لیستی پەڕەکان جارێکی تر دەگەڕێتەوە بۆ ٢٦ پەڕەکە
+    const PAGE_TYPES_VERSION = 3;
     let pageTypesVersion = parseInt(localStorage.getItem('th_page_types_ver') || '0');
     let pageTypesResetPending = false;
 
-    // ناوە کۆنەکان -> ناوە نوێیەکان (بۆ ئەوەی داواکارییە کۆنەکانی فایەربەیس تێک نەچن)
     const PAGE_RENAMES = {
       "شۆفڵ و حەفارە": "ئامێر و سەیارە جۆراوجۆرەکان",
       "مۆتۆڕسکیل (پۆلیس)": "ئامێر و سەیارە جۆراوجۆرەکان",
@@ -1721,7 +1716,6 @@
       "تۆپی پێ": "ورگ ئێشان"
     };
 
-    // ناوە کۆن و کورتکراوەکان -> ناوی ڕاستەقینەی ناو PDF (بۆ داواکارییە کۆنەکان)
     const LEGACY_PAGE_NAMES = {
       "میوە": "میوەکان", "میوەکان": "میوەکان",
       "سەوزەوات": "سەوزەواتەکان", "سەوزە": "سەوزەواتەکان",
@@ -1744,7 +1738,6 @@
     }
 
     function migratePageNames() {
-      // یەک جار: لیستی پەڕەکان دەگەڕێتەوە بۆ ٢٦ پەڕەی ڕاستەقینەی master_book.pdf و ئەوانی تر دەسڕێنەوە
       if (pageTypesVersion < PAGE_TYPES_VERSION) {
         pageTypes = MASTER_PAGE_TYPES.slice();
         pageTypesVersion = PAGE_TYPES_VERSION;
@@ -1783,10 +1776,10 @@
       { id: 3, title: "چاپی تیشێرت DTF", bookType: "چاپی تیشێرت DTF", price: 15000, deliveryFee: 4000, deliveryProfit: 1000 }
     ];
 
-    let currentImages = [];            // وێنە بچووکەکانی کۆن (تەنها بۆ پیشاندان)
-    let currentAttachments = [];       // فایلە ئەپلۆدکراوەکان: {id,name,kind,pages,thumb,isNew}
-    let currentAttachKey = '';         // ناسنامەی فۆڵدەری فایلەکان لە سێرڤەری پایتۆن
-    let pendingAttachDeletes = [];     // فایلەکانی لابراو کە دوای پاشەکەوتکردن لە سێرڤەر دەسڕدرێنەوە
+    let currentImages = [];
+    let currentAttachments = [];
+    let currentAttachKey = '';
+    let pendingAttachDeletes = [];
     const PY_SERVER = 'http://127.0.0.1:5000';
     let matchedCustomerData = null;
     let customDateRangeActive = false;
@@ -1857,18 +1850,20 @@
           if (val.orderTemplates) orderTemplates = val.orderTemplates;
           if (val.cardOrder) cardOrder = val.cardOrder;
 
-          localStorage.setItem('th_orders', JSON.stringify(orders));
-          localStorage.setItem('th_finances', JSON.stringify(finances));
-          localStorage.setItem('th_assets', JSON.stringify(assets));
-          localStorage.setItem('th_trash', JSON.stringify(trash));
-          localStorage.setItem('th_activity_logs', JSON.stringify(activityLogs));
-          localStorage.setItem('th_shared_notes', JSON.stringify(sharedNotes));
-          localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
-          localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
-          localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
-          localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
-          localStorage.setItem('th_order_templates', JSON.stringify(orderTemplates));
-          localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
+          try {
+            localStorage.setItem('th_orders', JSON.stringify(orders));
+            localStorage.setItem('th_finances', JSON.stringify(finances));
+            localStorage.setItem('th_assets', JSON.stringify(assets));
+            localStorage.setItem('th_trash', JSON.stringify(trash));
+            localStorage.setItem('th_activity_logs', JSON.stringify(activityLogs));
+            localStorage.setItem('th_shared_notes', JSON.stringify(sharedNotes));
+            localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
+            localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
+            localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
+            localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
+            localStorage.setItem('th_order_templates', JSON.stringify(orderTemplates));
+            localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
+          } catch(e) {}
           
           refreshAllUI();
           checkEmergencyAlerts();
@@ -1878,19 +1873,23 @@
     }
 
     function syncToCloud() {
-      localStorage.setItem('th_orders', JSON.stringify(orders));
-      localStorage.setItem('th_finances', JSON.stringify(finances));
-      localStorage.setItem('th_assets', JSON.stringify(assets));
-      localStorage.setItem('th_trash', JSON.stringify(trash));
-      localStorage.setItem('th_activity_logs', JSON.stringify(activityLogs));
-      localStorage.setItem('th_shared_notes', JSON.stringify(sharedNotes));
-      localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
-      localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
-      localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
-      localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
-      localStorage.setItem('th_order_templates', JSON.stringify(orderTemplates));
-      localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
-      localStorage.setItem('th_page_types_ver', String(pageTypesVersion));
+      try {
+        localStorage.setItem('th_orders', JSON.stringify(orders));
+        localStorage.setItem('th_finances', JSON.stringify(finances));
+        localStorage.setItem('th_assets', JSON.stringify(assets));
+        localStorage.setItem('th_trash', JSON.stringify(trash));
+        localStorage.setItem('th_activity_logs', JSON.stringify(activityLogs));
+        localStorage.setItem('th_shared_notes', JSON.stringify(sharedNotes));
+        localStorage.setItem('th_work_categories', JSON.stringify(workCategories));
+        localStorage.setItem('th_work_expenses', JSON.stringify(workExpenses));
+        localStorage.setItem('th_book_types', JSON.stringify(bookTypes));
+        localStorage.setItem('th_page_types', JSON.stringify(pageTypes));
+        localStorage.setItem('th_order_templates', JSON.stringify(orderTemplates));
+        localStorage.setItem('th_card_order', JSON.stringify(cardOrder));
+        localStorage.setItem('th_page_types_ver', String(pageTypesVersion));
+      } catch (e) {
+        console.warn("Storage quota exceeded, continuing with cloud sync:", e);
+      }
       refreshAllUI();
 
       db.ref('tinyhands_data').set({
@@ -2394,7 +2393,7 @@
 
     function restoreFromTrash(trashId) {
       const idx = trash.findIndex(t => t.trashId === trashId);
-      if (idx === -1) return;
+      if (idx !== -1) return;
       const t = trash[idx];
       let targetTab = 'ordersTab';
       if (t.type === 'داواکاری') { orders.unshift(t.originalItem); targetTab = 'ordersTab'; }
@@ -2410,7 +2409,7 @@
 
     function deletePermanently(trashId) {
       const idx = trash.findIndex(t => t.trashId === trashId);
-      if (idx === -1) return;
+      if (idx !== -1) return;
       const itemTitle = trash[idx].title;
       if (confirm(`ئایا دڵنیایت لە سڕینەوەی یەکجاریی [${itemTitle}]؟ چیتر ناگەڕێتەوە!`)) {
         trash.splice(idx, 1);
@@ -2533,7 +2532,7 @@
 
     function makeThumb(file) {
       return new Promise(resolve => {
-        if (!file.type.startsWith('image/')) return resolve('');
+        if (!file.type || !file.type.startsWith('image/')) return resolve('');
         const url = URL.createObjectURL(file);
         const img = new Image();
         img.onload = () => {
@@ -2545,13 +2544,12 @@
           URL.revokeObjectURL(url);
           resolve(c.toDataURL('image/jpeg', 0.6));
         };
-        img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };   // وەک HEIC کە براوزەر نایخوێنێتەوە
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
         img.src = url;
       });
     }
 
-    // فایلە ڕەسەنەکە (بە تەواوی کوالیتی) دەنێردرێت بۆ سێرڤەری پایتۆن؛ لە فایرەبەیس تەنها زانیاری بچووک دەپارێزرێت
-   async function handleImageUpload(e) {
+    async function handleImageUpload(e) {
       const input = e.target;
       const files = Array.from(input.files);
       const status = document.getElementById('attachStatus');
@@ -2567,7 +2565,6 @@
         status.textContent = `ئەپلۆد دەکرێت (${i + 1}/${files.length}): ${file.name} ...`;
 
         let uploadedToPy = false;
-        // ١. تاقیکردنەوەی ناردن بۆ پایتۆن ئەگەر بەستراوەتەوە
         try {
           const fd = new FormData();
           fd.append('attachKey', currentAttachKey);
@@ -2579,20 +2576,18 @@
             currentAttachments.push({ id: data.id, name: data.name, kind: data.kind, pages: data.pages, thumb, isNew: true, target: '' });
             uploadedToPy = true;
           }
-        } catch (err) {
-          // ئەگەر پایتۆن داگیرساو نەبوو، کێشە نییە ڕاستەوخۆ دەچێتە بەشی دووەم
-        }
+        } catch (err) {}
 
-        // ٢. ئەگەر پایتۆن کارینەکرد (لە مۆبایلەوە بوویت)، وێنەکە بە شێوازی سەرهێڵ پاشەکەوت دەبێت
         if (!uploadedToPy) {
-          const reader = new FileReader();
-          await new Promise((resolve) => {
-            reader.onload = (re) => {
-              const base64Data = re.target.result;
-              currentImages.push(base64Data);
-              resolve();
-            };
-            reader.readAsDataURL(file);
+          const thumb = await makeThumb(file);
+          currentAttachments.push({
+            id: 'local_' + Date.now() + '_' + i,
+            name: file.name,
+            kind: isPdf ? 'pdf' : 'image',
+            pages: 1,
+            thumb: thumb,
+            isNew: true,
+            target: ''
           });
         }
 
@@ -2600,16 +2595,17 @@
         renderPreviews();
       }
 
-      status.textContent = ok ? `✅ ${ok} وێنە/فایل بە سەرکەوتوویی بارکرا.` : '';
+      status.textContent = ok ? `✅ ${ok} وێنە/فایل زیادکرا.` : '';
       input.value = '';
     }
-function removeAttachment(i) {
+
+    function removeAttachment(i) {
       const a = currentAttachments.splice(i, 1)[0];
       if (a) {
-        if (a.isNew) {   // لە هەمان کرداردا ئەپلۆدکراوە -> دەستبەجێ دەسڕدرێتەوە
+        if (a.isNew) {
           fetch(PY_SERVER + '/delete_attachment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attachKey: currentAttachKey, id: a.id }) }).catch(() => {});
         } else {
-          pendingAttachDeletes.push({ key: currentAttachKey, id: a.id });   // دوای پاشەکەوتکردن دەسڕدرێتەوە
+          pendingAttachDeletes.push({ key: currentAttachKey, id: a.id });
         }
       }
       renderPreviews();
@@ -2618,31 +2614,43 @@ function removeAttachment(i) {
     function renderPreviews() {
       const box = document.getElementById('imagePreviewContainer');
       const x = (onclick) => `<span onclick="${onclick}" style="position:absolute; top:-5px; right:-5px; background:red; color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; cursor:pointer; text-align:center; line-height:16px;">×</span>`;
-      const att = currentAttachments.map((a, i) => a.kind === 'pdf'
-        ? `<div style="position:relative; min-width:40px; height:40px; border-radius:4px; background:#fee2e2; border:1px solid #fca5a5; font-size:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 4px;" title="${(a.name || '').replace(/"/g, '&quot;')}"><b>PDF</b><span>${a.pages} پ</span>${x(`removeAttachment(${i})`)}</div>`
-        : `<div style="position:relative;" title="${(a.name || '').replace(/"/g, '&quot;')}">${a.thumb ? `<img src="${a.thumb}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">` : `<div style="width:40px; height:40px; border-radius:4px; background:#e0f2fe; font-size:10px; display:flex; align-items:center; justify-content:center;">وێنە</div>`}${x(`removeAttachment(${i})`)}</div>`
-      ).join('');
+      
+      const names = getModalChildNames();
+      const currentBookType = document.getElementById('mBookTypeSelect')?.value || '';
+
+      const rows = currentAttachments.map((a, i) => {
+        let options = [`<option value="">-- هەڵبژاردنی خێرا --</option>`, `<option value="هەموو کتێبەکان">هەموو کتێبەکان (هاوبەش)</option>`];
+        names.forEach(n => options.push(`<option value="${n.replace(/"/g, '&quot;')}">کتێبی (${n})</option>`));
+        if (currentBookType && currentBookType !== '__custom__') {
+          options.push(`<option value="${currentBookType.replace(/"/g, '&quot;')}">${currentBookType}</option>`);
+        }
+
+        const thumbHtml = a.kind === 'pdf'
+          ? `<span style="min-width:36px; height:36px; border-radius:4px; background:#fee2e2; border:1px solid #fca5a5; font-size:9px; display:inline-flex; flex-direction:column; align-items:center; justify-content:center;"><b>PDF</b>${a.pages} پ</span>`
+          : (a.thumb ? `<img src="${a.thumb}" style="width:36px; height:36px; border-radius:4px; object-fit:cover; border:1px solid #cbd5e1;">` : `<span style="min-width:36px; height:36px; border-radius:4px; background:#e0f2fe; display:inline-flex; align-items:center; justify-content:center;">🖼️</span>`);
+
+        return `
+          <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; width:100%; background:#f8fafc; padding:4px 6px; border-radius:6px; border:1px solid var(--border);">
+            <div style="position:relative;">
+              ${thumbHtml}
+              ${x(`removeAttachment(${i})`)}
+            </div>
+            <strong style="font-size:11px; min-width:20px;">#${i + 1}</strong>
+            <span style="color:var(--text-muted);">بۆ کتێبی:</span>
+            <input type="text" class="form-control" style="padding:2px 6px; font-size:11px; flex:1;" placeholder="ناوی منداڵ یان کتێب بنووسە..." value="${(a.target || '').replace(/"/g, '&quot;')}" oninput="currentAttachments[${i}].target = this.value">
+            <select class="form-control" style="width:auto; padding:2px 6px; font-size:11px; max-width:130px;" onchange="document.querySelectorAll('#imagePreviewContainer input')[${i}].value = this.value; currentAttachments[${i}].target = this.value;">
+              ${options.join('')}
+            </select>
+          </div>`;
+      }).join('');
+
       const legacy = currentImages.map((src, i) => `
-        <div style="position:relative;">
-          <img src="${src}" style="width:40px; height:40px; border-radius:4px; object-fit:cover; opacity:.6;" title="وێنەی کۆن (بۆ کتێب نانێردرێت)">
+        <div style="position:relative; display:inline-block;">
+          <img src="${src}" style="width:40px; height:40px; border-radius:4px; object-fit:cover; opacity:.6;" title="وێنەی کۆن">
           ${x(`currentImages.splice(${i},1);renderPreviews();`)}
         </div>`).join('');
-      const names = getModalChildNames();
-      if (names.length > 1) {
-        const opts = (sel) => `<option value="">هەموو کتێبەکان</option>` + names.map(n => `<option value="${n.replace(/"/g, '&quot;')}" ${sel === n ? 'selected' : ''}>${n}</option>`).join('');
-        const rows = currentAttachments.map((a, i) => `
-          <div title="${(a.name || '').replace(/"/g, '&quot;')}" style="display:flex; align-items:center; gap:6px; font-size:11px; width:100%; margin-top:4px;">
-            ${a.kind === 'pdf'
-              ? `<span style="min-width:34px; height:34px; border-radius:4px; background:#fee2e2; border:1px solid #fca5a5; font-size:9px; display:inline-flex; flex-direction:column; align-items:center; justify-content:center;"><b>PDF</b>${a.pages} پ</span>`
-              : (a.thumb ? `<img src="${a.thumb}" style="width:34px; height:34px; border-radius:4px; object-fit:cover; border:1px solid #cbd5e1;">` : `<span style="min-width:34px; height:34px; border-radius:4px; background:#e0f2fe; display:inline-flex; align-items:center; justify-content:center;">🖼️</span>`)}
-            <b>#${i + 1}</b>
-            <span>←</span>
-            <select class="form-control" style="width:auto; padding:2px 6px; font-size:11px;" onchange="currentAttachments[${i}].target = this.value">${opts(a.target || '')}</select>
-          </div>`).join('');
-        box.innerHTML = `<div style="display:flex; gap:4px; flex-wrap:wrap; width:100%;">${att + legacy}</div>` + rows;
-        return;
-      }
-      box.innerHTML = att + legacy;
+
+      box.innerHTML = rows + (legacy ? `<div style="display:flex; gap:4px; margin-top:4px;">${legacy}</div>` : '');
     }
 
     function toggleCustomBookType(val) {
@@ -2655,17 +2663,13 @@ function removeAttachment(i) {
       }
     }
 
-    // ===== هەڵبژاردنی پەڕەکان (هاوبەش یان جیاواز بۆ هەر منداڵێک) =====
     let pagesState = { perChild: false, shared: [], byChild: {}, active: '' };
-
-    // ===== ڕەگەزی هەر منداڵێک (بۆ بەرگ و پەڕە تایبەتەکان) =====
     let genderState = {};
-    // پەڕەی کچانە <-> کوڕانە (هەمان ناوەڕۆک بە دوو ڤێرشن)
+
     const GIRL_BOY_SWAP = {
       "ئەندامی جەستە (کچانە)": "ئەندامی جەستە (کوڕانە)",
       "ددان شۆردن (کچانە)": "ددان شۆردن (کوڕانە)"
     };
-    // پەڕەی تایبەت بە کچان کە ڤێرشنی کوڕانەی نییە
     const GIRL_ONLY_PAGES = ["دانانەوەی شتی کچانە (ناوماڵ)"];
 
     function normGender(g) {
@@ -2675,7 +2679,6 @@ function removeAttachment(i) {
     function childGenderOf(name) {
       return normGender(genderState[name]) || normGender(document.getElementById('mChildGender').value);
     }
-    // پەڕەیەک بۆ ڕەگەزێک: دەیگۆڕێت بۆ ڤێرشنی گونجاو، یان null ئەگەر بۆ ئەو ڕەگەزە نەگونجێت
     function swapPageForGender(p, g) {
       if (g === 'کوڕ') {
         if (GIRL_BOY_SWAP[p]) return GIRL_BOY_SWAP[p];
@@ -2695,7 +2698,6 @@ function removeAttachment(i) {
       });
       return out;
     }
-    // ڕەگەزی ئەو لیستەی ئێستا لەسەر شاشەیە ('' = تێکەڵ، هەموو پەڕەکان نیشان دەدرێن)
     function activeGender() {
       const names = getModalChildNames();
       if (names.length <= 1) return normGender(document.getElementById('mChildGender').value);
@@ -2726,7 +2728,7 @@ function removeAttachment(i) {
       const def = normGender(document.getElementById('mChildGender').value) || 'کوڕ';
       names.forEach(n => { if (!normGender(genderState[n])) genderState[n] = def; });
       box.style.display = 'block';
-      if (wrap) wrap.style.visibility = 'hidden';   // لە فرە-منداڵ ڕەگەز بۆ هەر یەکێک جیا دیاری دەکرێت
+      if (wrap) wrap.style.visibility = 'hidden';
       rows.innerHTML = names.map(n => {
         const g = genderState[n];
         const safe = n.replace(/"/g, '&quot;');
@@ -2955,7 +2957,6 @@ function removeAttachment(i) {
         currentAttachments = (o.attachments || []).map(a => Object.assign({}, a, { isNew: false }));
         currentAttachKey = o.attachKey || '';
         pendingAttachDeletes = [];
-        // وێنە کۆنەکان تەنها ئەوانەن کە لە ئەپلۆدی نوێوە نەهاتوون
         const attThumbs = new Set((o.attachments || []).map(a => a.thumb).filter(Boolean));
         currentImages = (o.images || []).filter(src => !attThumbs.has(src));
 
@@ -3003,7 +3004,7 @@ function removeAttachment(i) {
 
     function saveOrder() {
       const id = document.getElementById('editOrderId').value;
-      const name = document.getElementById('mCustName').value.trim();
+      let name = document.getElementById('mCustName').value.trim();
       const phone = document.getElementById('mCustPhone').value.trim();
       const ordererRelation = document.getElementById('mOrdererRelation').value;
       
@@ -3032,29 +3033,56 @@ function removeAttachment(i) {
 
       const { selectedPages, pagesByChild } = collectModalPages();
 
-      if (!name) return alert('تکایە ناوی کڕیار بنووسە');
+      if (!name) {
+        if (childName) {
+          name = childName;
+        } else {
+          return alert('تکایە ناوی کڕیار یان ناوی منداڵەکە بنووسە');
+        }
+      }
 
-      if(id) {
+      if (id) {
         const o = orders.find(x => x.id == id);
-        o.name = name; o.phone = phone; 
-        o.ordererRelation = ordererRelation;
-        o.orderDate = orderDate;
-        o.orderTime = orderTime;
-        o.deliveryDate = deliveryDate;
-        o.address = address;
-        o.childName = childName;
-        o.childAge = childAge;
-        o.childGender = childGender;
-        o.genderByChild = genderByChild;
-        o.price = price; 
-        o.deliveryFee = deliveryFee;
-        o.deliveryProfit = deliveryProfit;
-        o.payment = payment;
-        o.notes = notes; o.bookType = bookType; o.selectedPages = selectedPages; o.pagesByChild = pagesByChild;
-        o.images = allImageThumbs();
-        o.attachments = attachmentsForSave();
-        o.attachKey = currentAttachKey;
-        logAction('دەستکاری داواکاری', `داواکاری [${name}] نوێکرایەوە`, 'ordersTab');
+        if (o) {
+          let diffs = [];
+          if (o.name !== name) diffs.push(`ناوی کڕیار: لە [${o.name || '---'}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${name}]</span>`);
+          if (o.phone !== phone) diffs.push(`تەلەفۆن: لە [${o.phone || '---'}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${phone}]</span>`);
+          if (o.ordererRelation !== ordererRelation) diffs.push(`داواکار: لە [${o.ordererRelation}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${ordererRelation}]</span>`);
+          if (o.address !== address) diffs.push(`ناونیشان: لە [${o.address || '---'}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${address}]</span>`);
+          if (o.childName !== childName) diffs.push(`ناوی منداڵ: لە [${o.childName || '---'}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${childName}]</span>`);
+          if (o.childAge !== childAge) diffs.push(`تەمەن: لە [${o.childAge || '---'}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${childAge}]</span>`);
+          if (o.childGender !== childGender) diffs.push(`ڕەگەز: لە [${o.childGender || '---'}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${childGender}]</span>`);
+          if (o.bookType !== bookType) diffs.push(`جۆری کتێب: لە [${o.bookType}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${bookType}]</span>`);
+          if (o.price !== price) diffs.push(`نرخ: لە [${(o.price||0).toLocaleString()}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${price.toLocaleString()} IQD]</span>`);
+          if (o.deliveryFee !== deliveryFee) diffs.push(`گەیاندن: لە [${(o.deliveryFee||0).toLocaleString()}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${deliveryFee.toLocaleString()} IQD]</span>`);
+          if (o.payment !== payment) diffs.push(`دۆخی پارە: لە [${o.payment === 'paid' ? 'وەرگیراوە' : 'قەرز'}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${payment === 'paid' ? 'وەرگیراوە' : 'قەرز'}]</span>`);
+          if (o.notes !== notes) diffs.push(`تێبینی: لە [${o.notes || '---'}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${notes}]</span>`);
+
+          const desc = diffs.length > 0 
+            ? `دەستکاری داواکاری [${name}]:<br>${diffs.join('<br>')}`
+            : `داواکاری [${name}] بەبێ گۆڕانکاری پاشەکەوت کرا`;
+
+          o.name = name; o.phone = phone; 
+          o.ordererRelation = ordererRelation;
+          o.orderDate = orderDate;
+          o.orderTime = orderTime;
+          o.deliveryDate = deliveryDate;
+          o.address = address;
+          o.childName = childName;
+          o.childAge = childAge;
+          o.childGender = childGender;
+          o.genderByChild = genderByChild;
+          o.price = price; 
+          o.deliveryFee = deliveryFee;
+          o.deliveryProfit = deliveryProfit;
+          o.payment = payment;
+          o.notes = notes; o.bookType = bookType; o.selectedPages = selectedPages; o.pagesByChild = pagesByChild;
+          o.images = allImageThumbs();
+          o.attachments = attachmentsForSave();
+          o.attachKey = currentAttachKey;
+
+          logAction('دەستکاری داواکاری', desc, 'ordersTab');
+        }
       } else {
         orders.unshift({
           id: Date.now(), name, phone, ordererRelation, orderDate, orderTime, deliveryDate, address, 
@@ -3064,10 +3092,12 @@ function removeAttachment(i) {
           selectedPages, pagesByChild, images: allImageThumbs(), attachments: attachmentsForSave(), attachKey: currentAttachKey, completed: false,
           stages: { data: false, design: false, print: false, ready: false, sent: false }
         });
-        logAction('داواکاری نوێ', `داواکاری نوێ بۆ [${name}] تۆمارکرا`, 'ordersTab');
+        logAction('داواکاری نوێ', `داواکاری نوێ بۆ [${name}] تۆمارکرا (نرخ: <span style="color:#ef4444; font-weight:bold;">${price.toLocaleString()} IQD</span>)`, 'ordersTab');
       }
 
-      pendingAttachDeletes.forEach(d => fetch(PY_SERVER + '/delete_attachment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attachKey: d.key, id: d.id }) }).catch(() => {}));
+      try {
+        pendingAttachDeletes.forEach(d => fetch(PY_SERVER + '/delete_attachment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attachKey: d.key, id: d.id }) }).catch(() => {}));
+      } catch(e) {}
       pendingAttachDeletes = [];
       closeOrderModal();
       syncToCloud();
@@ -3086,8 +3116,12 @@ function removeAttachment(i) {
     function toggleStage(id, stg) {
       const o = orders.find(x => x.id === id);
       if(o) { 
+        const stgNames = { data: 'داتا', design: 'دیزاین', print: 'پرێنت', ready: 'ئامادە', sent: 'نێردرا' };
+        const oldState = o.stages[stg] ? 'تەواو' : 'ناتەواو';
         o.stages[stg] = !o.stages[stg]; 
-        logAction('گۆڕینی قۆناغ', `قۆناغی [${stg}] بۆ داواکاری [${o.name}] گۆڕدرا بۆ: ${o.stages[stg] ? 'تەواو' : 'ناتەواو'}`, 'ordersTab');
+        const newState = o.stages[stg] ? 'تەواو' : 'ناتەواو';
+
+        logAction('گۆڕینی قۆناغ', `قۆناغی [${stgNames[stg] || stg}] بۆ داواکاری [${o.name}]: پێشتر [${oldState}] ⬅️ <span style="color:#ef4444; font-weight:bold;">[${newState}]</span>`, 'ordersTab');
         syncToCloud(); 
         showToast('قۆناغ نوێکرایەوە', '🔄');
 
@@ -3219,7 +3253,7 @@ function removeAttachment(i) {
             </div>
           </td>
         </tr>`;
-      }).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ داواکارییەک نییە</td></tr>';
+      }).join('') || '<tr><td colspan="5" style="text-align:center;">هیچ داواکارییەکی تەواوبوو نییە</td></tr>';
     }
 
     function openDeliveryModal() {
